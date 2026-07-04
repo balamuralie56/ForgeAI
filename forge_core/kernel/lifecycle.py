@@ -2,6 +2,7 @@
 Lifecycle management for system engines and core modules of ForgeAI.
 Provides interface and coordinator to boot and shut down components deterministically.
 """
+
 import logging
 from abc import ABC, abstractmethod
 from typing import List
@@ -76,5 +77,5 @@ class LifecycleManager:
             except Exception as e:
                 logger.error(
                     f"Unhandled error occurred during shutdown of {name}: {e}",
-                    exc_info=True
+                    exc_info=True,
                 )

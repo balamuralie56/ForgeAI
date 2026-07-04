@@ -2,6 +2,7 @@
 Service Registry for dependency injection in ForgeAI.
 Allows registration and resolution of system services by their interface type.
 """
+
 from typing import Any, Dict, Type, TypeVar
 
 from .exceptions import ServiceNotFoundError
@@ -32,7 +33,7 @@ class ServiceRegistry:
         """
         if instance is None:
             raise ValueError("Service instance cannot be None.")
-            
+
         self._services[interface] = instance
 
     def resolve(self, interface: Type[T]) -> T:

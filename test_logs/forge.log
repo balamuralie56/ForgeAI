@@ -1,0 +1,222 @@
+{"timestamp":"2026-07-04T14:59:37.284590+00:00","level":"INFO","module":"ForgeAI.ModelRouter","message":"Bootstrapping default model provider: 'ollama' (Model: 'qwen', URL: 'http://localhost:11434')"}
+{"timestamp":"2026-07-04T14:59:37.284706+00:00","level":"INFO","module":"ForgeAI.ModelRouter","message":"Registered model provider: 'ollama'"}
+{"timestamp":"2026-07-04T14:59:37.285668+00:00","level":"WARNING","module":"ForgeAI.PluginManager","message":"Configured plugins directory does not exist: B:\\ForgeAI\\test_plugins"}
+{"timestamp":"2026-07-04T14:59:37.285776+00:00","level":"INFO","module":"ForgeAI.Kernel","message":"ForgeAI Kernel boot complete."}
+{"timestamp":"2026-07-04T14:59:37.285844+00:00","level":"INFO","module":"ForgeAI.Kernel","message":"Initiating Kernel shutdown sequence..."}
+{"timestamp":"2026-07-04T14:59:37.285883+00:00","level":"INFO","module":"ForgeAI.PluginManager","message":"Unloading and shutting down all plugins..."}
+{"timestamp":"2026-07-04T14:59:47.461557+00:00","level":"INFO","module":"ForgeAI.ModelRouter","message":"Bootstrapping default model provider: 'ollama' (Model: 'qwen', URL: 'http://localhost:11434')"}
+{"timestamp":"2026-07-04T14:59:47.461710+00:00","level":"INFO","module":"ForgeAI.ModelRouter","message":"Registered model provider: 'ollama'"}
+{"timestamp":"2026-07-04T14:59:47.467832+00:00","level":"WARNING","module":"ForgeAI.PluginManager","message":"Configured plugins directory does not exist: B:\\ForgeAI\\test_plugins"}
+{"timestamp":"2026-07-04T14:59:47.468016+00:00","level":"INFO","module":"ForgeAI.Kernel","message":"ForgeAI Kernel boot complete."}
+{"timestamp":"2026-07-04T14:59:47.468117+00:00","level":"INFO","module":"ForgeAI.Kernel","message":"Initiating Kernel shutdown sequence..."}
+{"timestamp":"2026-07-04T14:59:47.468189+00:00","level":"INFO","module":"ForgeAI.PluginManager","message":"Unloading and shutting down all plugins..."}
+{"timestamp":"2026-07-04T15:04:00.250125+00:00","level":"INFO","module":"ForgeAI.ModelRouter","message":"Bootstrapping default model provider: 'ollama' (Model: 'qwen', URL: 'http://localhost:11434')"}
+{"timestamp":"2026-07-04T15:04:00.250258+00:00","level":"INFO","module":"ForgeAI.ModelRouter","message":"Registered model provider: 'ollama'"}
+{"timestamp":"2026-07-04T15:04:00.251540+00:00","level":"WARNING","module":"ForgeAI.PluginManager","message":"Configured plugins directory does not exist: B:\\ForgeAI\\test_plugins"}
+{"timestamp":"2026-07-04T15:04:00.251739+00:00","level":"INFO","module":"ForgeAI.Kernel","message":"ForgeAI Kernel boot complete."}
+{"timestamp":"2026-07-04T15:04:00.251863+00:00","level":"INFO","module":"ForgeAI.Kernel","message":"Initiating Kernel shutdown sequence..."}
+{"timestamp":"2026-07-04T15:04:00.251940+00:00","level":"INFO","module":"ForgeAI.PluginManager","message":"Unloading and shutting down all plugins..."}
+{"timestamp":"2026-07-04T16:58:45.604625+00:00","level":"INFO","module":"ForgeAI.ModelRouter","message":"Bootstrapping default model provider: 'ollama' (Model: 'qwen', URL: 'http://localhost:11434')"}
+{"timestamp":"2026-07-04T16:58:45.604788+00:00","level":"INFO","module":"ForgeAI.ModelRouter","message":"Registered model provider: 'ollama'"}
+{"timestamp":"2026-07-04T16:58:45.605761+00:00","level":"WARNING","module":"ForgeAI.PluginManager","message":"Configured plugins directory does not exist: B:\\ForgeAI\\test_plugins"}
+{"timestamp":"2026-07-04T16:58:45.605872+00:00","level":"INFO","module":"ForgeAI.Kernel","message":"ForgeAI Kernel boot complete."}
+{"timestamp":"2026-07-04T16:58:45.605949+00:00","level":"INFO","module":"ForgeAI.Kernel","message":"Initiating Kernel shutdown sequence..."}
+{"timestamp":"2026-07-04T16:58:45.606025+00:00","level":"INFO","module":"ForgeAI.PluginManager","message":"Unloading and shutting down all plugins..."}
+{"timestamp":"2026-07-04T17:14:47.006885+00:00","level":"INFO","module":"ForgeAI.ModelRouter","message":"Bootstrapping default model provider: 'ollama' (Model: 'qwen', URL: 'http://localhost:11434')"}
+{"timestamp":"2026-07-04T17:14:47.007000+00:00","level":"INFO","module":"ForgeAI.ModelRouter","message":"Registered model provider: 'ollama'"}
+{"timestamp":"2026-07-04T17:14:47.007103+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Initializing lifecycle component: ForgeAIEventBus..."}
+{"timestamp":"2026-07-04T17:14:47.007154+00:00","level":"INFO","module":"ForgeAI.EventBus","message":"Event Bus service initialized."}
+{"timestamp":"2026-07-04T17:14:47.007192+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Initializing lifecycle component: ForgeAIMemoryService..."}
+{"timestamp":"2026-07-04T17:14:47.015986+00:00","level":"INFO","module":"ForgeAI.Memory.Persistence","message":"SQLite DB initialized at forge_data\\databases\\project_memory.db"}
+{"timestamp":"2026-07-04T17:14:47.016120+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Initializing lifecycle component: ForgeAITaskEngine..."}
+{"timestamp":"2026-07-04T17:14:47.016173+00:00","level":"INFO","module":"ForgeAI.TaskEngine","message":"Task Engine service initialized."}
+{"timestamp":"2026-07-04T17:14:47.016849+00:00","level":"WARNING","module":"ForgeAI.PluginManager","message":"Configured plugins directory does not exist: B:\\ForgeAI\\test_plugins"}
+{"timestamp":"2026-07-04T17:14:47.017074+00:00","level":"INFO","module":"ForgeAI.Kernel","message":"ForgeAI Kernel boot complete."}
+{"timestamp":"2026-07-04T17:14:47.017153+00:00","level":"INFO","module":"ForgeAI.Kernel","message":"Initiating Kernel shutdown sequence..."}
+{"timestamp":"2026-07-04T17:14:47.017193+00:00","level":"INFO","module":"ForgeAI.PluginManager","message":"Unloading and shutting down all plugins..."}
+{"timestamp":"2026-07-04T17:14:47.017230+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Shutting down lifecycle component: ForgeAITaskEngine..."}
+{"timestamp":"2026-07-04T17:14:47.017260+00:00","level":"INFO","module":"ForgeAI.TaskEngine","message":"Task Engine shutting down. Cancelling all running DAGs..."}
+{"timestamp":"2026-07-04T17:14:47.017290+00:00","level":"INFO","module":"ForgeAI.TaskEngine","message":"Task Engine shutdown complete."}
+{"timestamp":"2026-07-04T17:14:47.017317+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Shutting down lifecycle component: ForgeAIMemoryService..."}
+{"timestamp":"2026-07-04T17:14:47.020891+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Shutting down lifecycle component: ForgeAIEventBus..."}
+{"timestamp":"2026-07-04T17:14:47.021118+00:00","level":"INFO","module":"ForgeAI.EventBus","message":"Event Bus service shut down. All subscriptions cleared."}
+{"timestamp":"2026-07-04T17:16:34.983448+00:00","level":"INFO","module":"ForgeAI.ModelRouter","message":"Bootstrapping default model provider: 'ollama' (Model: 'qwen', URL: 'http://localhost:11434')"}
+{"timestamp":"2026-07-04T17:16:34.983559+00:00","level":"INFO","module":"ForgeAI.ModelRouter","message":"Registered model provider: 'ollama'"}
+{"timestamp":"2026-07-04T17:16:34.983641+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Initializing lifecycle component: ForgeAIEventBus..."}
+{"timestamp":"2026-07-04T17:16:34.983680+00:00","level":"INFO","module":"ForgeAI.EventBus","message":"Event Bus service initialized."}
+{"timestamp":"2026-07-04T17:16:34.983711+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Initializing lifecycle component: ForgeAIMemoryService..."}
+{"timestamp":"2026-07-04T17:16:34.985815+00:00","level":"INFO","module":"ForgeAI.Memory.Persistence","message":"SQLite DB initialized at forge_data\\databases\\project_memory.db"}
+{"timestamp":"2026-07-04T17:16:34.985905+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Initializing lifecycle component: ForgeAITaskEngine..."}
+{"timestamp":"2026-07-04T17:16:34.985948+00:00","level":"INFO","module":"ForgeAI.TaskEngine","message":"Task Engine service initialized."}
+{"timestamp":"2026-07-04T17:16:34.986613+00:00","level":"WARNING","module":"ForgeAI.PluginManager","message":"Configured plugins directory does not exist: B:\\ForgeAI\\test_plugins"}
+{"timestamp":"2026-07-04T17:16:34.986689+00:00","level":"INFO","module":"ForgeAI.Kernel","message":"ForgeAI Kernel boot complete."}
+{"timestamp":"2026-07-04T17:16:34.986745+00:00","level":"INFO","module":"ForgeAI.Kernel","message":"Initiating Kernel shutdown sequence..."}
+{"timestamp":"2026-07-04T17:16:34.986780+00:00","level":"INFO","module":"ForgeAI.PluginManager","message":"Unloading and shutting down all plugins..."}
+{"timestamp":"2026-07-04T17:16:34.986815+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Shutting down lifecycle component: ForgeAITaskEngine..."}
+{"timestamp":"2026-07-04T17:16:34.986845+00:00","level":"INFO","module":"ForgeAI.TaskEngine","message":"Task Engine shutting down. Cancelling all running DAGs..."}
+{"timestamp":"2026-07-04T17:16:34.986875+00:00","level":"INFO","module":"ForgeAI.TaskEngine","message":"Task Engine shutdown complete."}
+{"timestamp":"2026-07-04T17:16:34.986905+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Shutting down lifecycle component: ForgeAIMemoryService..."}
+{"timestamp":"2026-07-04T17:16:34.987416+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Shutting down lifecycle component: ForgeAIEventBus..."}
+{"timestamp":"2026-07-04T17:16:34.987578+00:00","level":"INFO","module":"ForgeAI.EventBus","message":"Event Bus service shut down. All subscriptions cleared."}
+{"timestamp":"2026-07-04T17:22:05.062612+00:00","level":"INFO","module":"ForgeAI.ModelRouter","message":"Bootstrapping default model provider: 'ollama' (Model: 'qwen', URL: 'http://localhost:11434')"}
+{"timestamp":"2026-07-04T17:22:05.063040+00:00","level":"INFO","module":"ForgeAI.ModelRouter","message":"Registered model provider: 'ollama'"}
+{"timestamp":"2026-07-04T17:22:05.063421+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Initializing lifecycle component: ForgeAIEventBus..."}
+{"timestamp":"2026-07-04T17:22:05.063644+00:00","level":"INFO","module":"ForgeAI.EventBus","message":"Event Bus service initialized."}
+{"timestamp":"2026-07-04T17:22:05.063836+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Initializing lifecycle component: ForgeAIMemoryService..."}
+{"timestamp":"2026-07-04T17:22:05.073271+00:00","level":"INFO","module":"ForgeAI.Memory.Persistence","message":"SQLite DB initialized at forge_data\\databases\\project_memory.db"}
+{"timestamp":"2026-07-04T17:22:05.073395+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Initializing lifecycle component: ForgeAITaskEngine..."}
+{"timestamp":"2026-07-04T17:22:05.073452+00:00","level":"INFO","module":"ForgeAI.TaskEngine","message":"Task Engine service initialized."}
+{"timestamp":"2026-07-04T17:22:05.073959+00:00","level":"WARNING","module":"ForgeAI.PluginManager","message":"Configured plugins directory does not exist: B:\\ForgeAI\\test_plugins"}
+{"timestamp":"2026-07-04T17:22:05.074035+00:00","level":"INFO","module":"ForgeAI.Kernel","message":"ForgeAI Kernel boot complete."}
+{"timestamp":"2026-07-04T17:22:05.074093+00:00","level":"INFO","module":"ForgeAI.Kernel","message":"Initiating Kernel shutdown sequence..."}
+{"timestamp":"2026-07-04T17:22:05.074137+00:00","level":"INFO","module":"ForgeAI.PluginManager","message":"Unloading and shutting down all plugins..."}
+{"timestamp":"2026-07-04T17:22:05.074180+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Shutting down lifecycle component: ForgeAITaskEngine..."}
+{"timestamp":"2026-07-04T17:22:05.074212+00:00","level":"INFO","module":"ForgeAI.TaskEngine","message":"Task Engine shutting down. Cancelling all running DAGs..."}
+{"timestamp":"2026-07-04T17:22:05.074243+00:00","level":"INFO","module":"ForgeAI.TaskEngine","message":"Task Engine shutdown complete."}
+{"timestamp":"2026-07-04T17:22:05.074277+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Shutting down lifecycle component: ForgeAIMemoryService..."}
+{"timestamp":"2026-07-04T17:22:05.074472+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Shutting down lifecycle component: ForgeAIEventBus..."}
+{"timestamp":"2026-07-04T17:22:05.074517+00:00","level":"INFO","module":"ForgeAI.EventBus","message":"Event Bus service shut down. All subscriptions cleared."}
+{"timestamp":"2026-07-04T17:27:23.419257+00:00","level":"INFO","module":"ForgeAI.ModelRouter","message":"Bootstrapping default model provider: 'ollama' (Model: 'qwen', URL: 'http://localhost:11434')"}
+{"timestamp":"2026-07-04T17:27:23.421215+00:00","level":"INFO","module":"ForgeAI.ModelRouter","message":"Registered model provider: 'ollama'"}
+{"timestamp":"2026-07-04T17:27:23.421402+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Initializing lifecycle component: ForgeAIEventBus..."}
+{"timestamp":"2026-07-04T17:27:23.421476+00:00","level":"INFO","module":"ForgeAI.EventBus","message":"Event Bus service initialized."}
+{"timestamp":"2026-07-04T17:27:23.421531+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Initializing lifecycle component: ForgeAIMemoryService..."}
+{"timestamp":"2026-07-04T17:27:23.429764+00:00","level":"INFO","module":"ForgeAI.Memory.Persistence","message":"SQLite DB initialized at forge_data\\databases\\project_memory.db"}
+{"timestamp":"2026-07-04T17:27:23.429910+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Initializing lifecycle component: ForgeAITaskEngine..."}
+{"timestamp":"2026-07-04T17:27:23.429987+00:00","level":"INFO","module":"ForgeAI.TaskEngine","message":"Task Engine service initialized."}
+{"timestamp":"2026-07-04T17:27:23.430680+00:00","level":"WARNING","module":"ForgeAI.PluginManager","message":"Configured plugins directory does not exist: B:\\ForgeAI\\test_plugins"}
+{"timestamp":"2026-07-04T17:27:23.430801+00:00","level":"INFO","module":"ForgeAI.Kernel","message":"ForgeAI Kernel boot complete in 15 ms."}
+{"timestamp":"2026-07-04T17:27:23.430906+00:00","level":"INFO","module":"ForgeAI.Kernel","message":"Initiating Kernel shutdown sequence..."}
+{"timestamp":"2026-07-04T17:27:23.430991+00:00","level":"INFO","module":"ForgeAI.PluginManager","message":"Unloading and shutting down all plugins..."}
+{"timestamp":"2026-07-04T17:27:23.431055+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Shutting down lifecycle component: ForgeAITaskEngine..."}
+{"timestamp":"2026-07-04T17:27:23.431117+00:00","level":"INFO","module":"ForgeAI.TaskEngine","message":"Task Engine shutting down. Cancelling all running DAGs..."}
+{"timestamp":"2026-07-04T17:27:23.431170+00:00","level":"INFO","module":"ForgeAI.TaskEngine","message":"Task Engine shutdown complete."}
+{"timestamp":"2026-07-04T17:27:23.431224+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Shutting down lifecycle component: ForgeAIMemoryService..."}
+{"timestamp":"2026-07-04T17:27:23.431541+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Shutting down lifecycle component: ForgeAIEventBus..."}
+{"timestamp":"2026-07-04T17:27:23.431616+00:00","level":"INFO","module":"ForgeAI.EventBus","message":"Event Bus service shut down. All subscriptions cleared."}
+{"timestamp":"2026-07-04T17:27:42.194751+00:00","level":"INFO","module":"ForgeAI.ModelRouter","message":"Bootstrapping default model provider: 'ollama' (Model: 'qwen', URL: 'http://localhost:11434')"}
+{"timestamp":"2026-07-04T17:27:42.195302+00:00","level":"INFO","module":"ForgeAI.ModelRouter","message":"Registered model provider: 'ollama'"}
+{"timestamp":"2026-07-04T17:27:42.195792+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Initializing lifecycle component: ForgeAIEventBus..."}
+{"timestamp":"2026-07-04T17:27:42.196767+00:00","level":"INFO","module":"ForgeAI.EventBus","message":"Event Bus service initialized."}
+{"timestamp":"2026-07-04T17:27:42.196948+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Initializing lifecycle component: ForgeAIMemoryService..."}
+{"timestamp":"2026-07-04T17:27:42.213260+00:00","level":"INFO","module":"ForgeAI.Memory.Persistence","message":"SQLite DB initialized at forge_data\\databases\\project_memory.db"}
+{"timestamp":"2026-07-04T17:27:42.213817+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Initializing lifecycle component: ForgeAITaskEngine..."}
+{"timestamp":"2026-07-04T17:27:42.214171+00:00","level":"INFO","module":"ForgeAI.TaskEngine","message":"Task Engine service initialized."}
+{"timestamp":"2026-07-04T17:27:42.217004+00:00","level":"WARNING","module":"ForgeAI.PluginManager","message":"Configured plugins directory does not exist: B:\\ForgeAI\\test_plugins"}
+{"timestamp":"2026-07-04T17:27:42.217508+00:00","level":"INFO","module":"ForgeAI.Kernel","message":"ForgeAI Kernel boot complete in 29 ms."}
+{"timestamp":"2026-07-04T17:27:42.217870+00:00","level":"INFO","module":"ForgeAI.Kernel","message":"Initiating Kernel shutdown sequence..."}
+{"timestamp":"2026-07-04T17:27:42.218179+00:00","level":"INFO","module":"ForgeAI.PluginManager","message":"Unloading and shutting down all plugins..."}
+{"timestamp":"2026-07-04T17:27:42.218286+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Shutting down lifecycle component: ForgeAITaskEngine..."}
+{"timestamp":"2026-07-04T17:27:42.218379+00:00","level":"INFO","module":"ForgeAI.TaskEngine","message":"Task Engine shutting down. Cancelling all running DAGs..."}
+{"timestamp":"2026-07-04T17:27:42.218449+00:00","level":"INFO","module":"ForgeAI.TaskEngine","message":"Task Engine shutdown complete."}
+{"timestamp":"2026-07-04T17:27:42.218520+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Shutting down lifecycle component: ForgeAIMemoryService..."}
+{"timestamp":"2026-07-04T17:27:42.219337+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Shutting down lifecycle component: ForgeAIEventBus..."}
+{"timestamp":"2026-07-04T17:27:42.219602+00:00","level":"INFO","module":"ForgeAI.EventBus","message":"Event Bus service shut down. All subscriptions cleared."}
+{"timestamp":"2026-07-04T17:28:56.662121+00:00","level":"INFO","module":"ForgeAI.ModelRouter","message":"Bootstrapping default model provider: 'ollama' (Model: 'qwen', URL: 'http://localhost:11434')"}
+{"timestamp":"2026-07-04T17:28:56.662301+00:00","level":"INFO","module":"ForgeAI.ModelRouter","message":"Registered model provider: 'ollama'"}
+{"timestamp":"2026-07-04T17:28:56.662492+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Initializing lifecycle component: ForgeAIEventBus..."}
+{"timestamp":"2026-07-04T17:28:56.662607+00:00","level":"INFO","module":"ForgeAI.EventBus","message":"Event Bus service initialized."}
+{"timestamp":"2026-07-04T17:28:56.662706+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Initializing lifecycle component: ForgeAIMemoryService..."}
+{"timestamp":"2026-07-04T17:28:56.664671+00:00","level":"INFO","module":"ForgeAI.Memory.Persistence","message":"SQLite DB initialized at forge_data\\databases\\project_memory.db"}
+{"timestamp":"2026-07-04T17:28:56.664833+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Initializing lifecycle component: ForgeAITaskEngine..."}
+{"timestamp":"2026-07-04T17:28:56.664938+00:00","level":"INFO","module":"ForgeAI.TaskEngine","message":"Task Engine service initialized."}
+{"timestamp":"2026-07-04T17:28:56.666306+00:00","level":"WARNING","module":"ForgeAI.PluginManager","message":"Configured plugins directory does not exist: B:\\ForgeAI\\test_plugins"}
+{"timestamp":"2026-07-04T17:28:56.666459+00:00","level":"INFO","module":"ForgeAI.Kernel","message":"ForgeAI Kernel boot complete in 6 ms."}
+{"timestamp":"2026-07-04T17:28:56.666607+00:00","level":"INFO","module":"ForgeAI.Kernel","message":"Initiating Kernel shutdown sequence..."}
+{"timestamp":"2026-07-04T17:28:56.666702+00:00","level":"INFO","module":"ForgeAI.PluginManager","message":"Unloading and shutting down all plugins..."}
+{"timestamp":"2026-07-04T17:28:56.666796+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Shutting down lifecycle component: ForgeAITaskEngine..."}
+{"timestamp":"2026-07-04T17:28:56.666886+00:00","level":"INFO","module":"ForgeAI.TaskEngine","message":"Task Engine shutting down. Cancelling all running DAGs..."}
+{"timestamp":"2026-07-04T17:28:56.666972+00:00","level":"INFO","module":"ForgeAI.TaskEngine","message":"Task Engine shutdown complete."}
+{"timestamp":"2026-07-04T17:28:56.667057+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Shutting down lifecycle component: ForgeAIMemoryService..."}
+{"timestamp":"2026-07-04T17:28:56.667285+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Shutting down lifecycle component: ForgeAIEventBus..."}
+{"timestamp":"2026-07-04T17:28:56.667388+00:00","level":"INFO","module":"ForgeAI.EventBus","message":"Event Bus service shut down. All subscriptions cleared."}
+{"timestamp":"2026-07-04T17:29:23.851230+00:00","level":"INFO","module":"ForgeAI.ModelRouter","message":"Bootstrapping default model provider: 'ollama' (Model: 'qwen', URL: 'http://localhost:11434')"}
+{"timestamp":"2026-07-04T17:29:23.851409+00:00","level":"INFO","module":"ForgeAI.ModelRouter","message":"Registered model provider: 'ollama'"}
+{"timestamp":"2026-07-04T17:29:23.851555+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Initializing lifecycle component: ForgeAIEventBus..."}
+{"timestamp":"2026-07-04T17:29:23.851612+00:00","level":"INFO","module":"ForgeAI.EventBus","message":"Event Bus service initialized."}
+{"timestamp":"2026-07-04T17:29:23.851659+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Initializing lifecycle component: ForgeAIMemoryService..."}
+{"timestamp":"2026-07-04T17:29:23.853038+00:00","level":"INFO","module":"ForgeAI.Memory.Persistence","message":"SQLite DB initialized at forge_data\\databases\\project_memory.db"}
+{"timestamp":"2026-07-04T17:29:23.853150+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Initializing lifecycle component: ForgeAITaskEngine..."}
+{"timestamp":"2026-07-04T17:29:23.853214+00:00","level":"INFO","module":"ForgeAI.TaskEngine","message":"Task Engine service initialized."}
+{"timestamp":"2026-07-04T17:29:23.854266+00:00","level":"WARNING","module":"ForgeAI.PluginManager","message":"Configured plugins directory does not exist: B:\\ForgeAI\\test_plugins"}
+{"timestamp":"2026-07-04T17:29:23.854469+00:00","level":"INFO","module":"ForgeAI.Kernel","message":"ForgeAI Kernel boot complete in 6 ms."}
+{"timestamp":"2026-07-04T17:29:23.854683+00:00","level":"INFO","module":"ForgeAI.Kernel","message":"Initiating Kernel shutdown sequence..."}
+{"timestamp":"2026-07-04T17:29:23.854789+00:00","level":"INFO","module":"ForgeAI.PluginManager","message":"Unloading and shutting down all plugins..."}
+{"timestamp":"2026-07-04T17:29:23.854892+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Shutting down lifecycle component: ForgeAITaskEngine..."}
+{"timestamp":"2026-07-04T17:29:23.854989+00:00","level":"INFO","module":"ForgeAI.TaskEngine","message":"Task Engine shutting down. Cancelling all running DAGs..."}
+{"timestamp":"2026-07-04T17:29:23.855087+00:00","level":"INFO","module":"ForgeAI.TaskEngine","message":"Task Engine shutdown complete."}
+{"timestamp":"2026-07-04T17:29:23.855221+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Shutting down lifecycle component: ForgeAIMemoryService..."}
+{"timestamp":"2026-07-04T17:29:23.855569+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Shutting down lifecycle component: ForgeAIEventBus..."}
+{"timestamp":"2026-07-04T17:29:23.855725+00:00","level":"INFO","module":"ForgeAI.EventBus","message":"Event Bus service shut down. All subscriptions cleared."}
+{"timestamp":"2026-07-04T17:29:46.824337+00:00","level":"INFO","module":"ForgeAI.ModelRouter","message":"Bootstrapping default model provider: 'ollama' (Model: 'qwen', URL: 'http://localhost:11434')"}
+{"timestamp":"2026-07-04T17:29:46.824448+00:00","level":"INFO","module":"ForgeAI.ModelRouter","message":"Registered model provider: 'ollama'"}
+{"timestamp":"2026-07-04T17:29:46.824553+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Initializing lifecycle component: ForgeAIEventBus..."}
+{"timestamp":"2026-07-04T17:29:46.824606+00:00","level":"INFO","module":"ForgeAI.EventBus","message":"Event Bus service initialized."}
+{"timestamp":"2026-07-04T17:29:46.824653+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Initializing lifecycle component: ForgeAIMemoryService..."}
+{"timestamp":"2026-07-04T17:29:46.827286+00:00","level":"INFO","module":"ForgeAI.Memory.Persistence","message":"SQLite DB initialized at forge_data\\databases\\project_memory.db"}
+{"timestamp":"2026-07-04T17:29:46.827591+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Initializing lifecycle component: ForgeAITaskEngine..."}
+{"timestamp":"2026-07-04T17:29:46.827697+00:00","level":"INFO","module":"ForgeAI.TaskEngine","message":"Task Engine service initialized."}
+{"timestamp":"2026-07-04T17:29:46.828657+00:00","level":"WARNING","module":"ForgeAI.PluginManager","message":"Configured plugins directory does not exist: B:\\ForgeAI\\test_plugins"}
+{"timestamp":"2026-07-04T17:29:46.828849+00:00","level":"INFO","module":"ForgeAI.Kernel","message":"ForgeAI Kernel boot complete in 5 ms."}
+{"timestamp":"2026-07-04T17:29:46.829017+00:00","level":"INFO","module":"ForgeAI.Kernel","message":"Initiating Kernel shutdown sequence..."}
+{"timestamp":"2026-07-04T17:29:46.829119+00:00","level":"INFO","module":"ForgeAI.PluginManager","message":"Unloading and shutting down all plugins..."}
+{"timestamp":"2026-07-04T17:29:46.829225+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Shutting down lifecycle component: ForgeAITaskEngine..."}
+{"timestamp":"2026-07-04T17:29:46.829339+00:00","level":"INFO","module":"ForgeAI.TaskEngine","message":"Task Engine shutting down. Cancelling all running DAGs..."}
+{"timestamp":"2026-07-04T17:29:46.829437+00:00","level":"INFO","module":"ForgeAI.TaskEngine","message":"Task Engine shutdown complete."}
+{"timestamp":"2026-07-04T17:29:46.829541+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Shutting down lifecycle component: ForgeAIMemoryService..."}
+{"timestamp":"2026-07-04T17:29:46.829788+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Shutting down lifecycle component: ForgeAIEventBus..."}
+{"timestamp":"2026-07-04T17:29:46.829901+00:00","level":"INFO","module":"ForgeAI.EventBus","message":"Event Bus service shut down. All subscriptions cleared."}
+{"timestamp":"2026-07-04T17:30:16.901334+00:00","level":"INFO","module":"ForgeAI.ModelRouter","message":"Bootstrapping default model provider: 'ollama' (Model: 'qwen', URL: 'http://localhost:11434')"}
+{"timestamp":"2026-07-04T17:30:16.901482+00:00","level":"INFO","module":"ForgeAI.ModelRouter","message":"Registered model provider: 'ollama'"}
+{"timestamp":"2026-07-04T17:30:16.901620+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Initializing lifecycle component: ForgeAIEventBus..."}
+{"timestamp":"2026-07-04T17:30:16.901685+00:00","level":"INFO","module":"ForgeAI.EventBus","message":"Event Bus service initialized."}
+{"timestamp":"2026-07-04T17:30:16.901735+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Initializing lifecycle component: ForgeAIMemoryService..."}
+{"timestamp":"2026-07-04T17:30:16.903877+00:00","level":"INFO","module":"ForgeAI.Memory.Persistence","message":"SQLite DB initialized at forge_data\\databases\\project_memory.db"}
+{"timestamp":"2026-07-04T17:30:16.904107+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Initializing lifecycle component: ForgeAITaskEngine..."}
+{"timestamp":"2026-07-04T17:30:16.904254+00:00","level":"INFO","module":"ForgeAI.TaskEngine","message":"Task Engine service initialized."}
+{"timestamp":"2026-07-04T17:30:16.905879+00:00","level":"WARNING","module":"ForgeAI.PluginManager","message":"Configured plugins directory does not exist: B:\\ForgeAI\\test_plugins"}
+{"timestamp":"2026-07-04T17:30:16.906099+00:00","level":"INFO","module":"ForgeAI.Kernel","message":"ForgeAI Kernel boot complete in 7 ms."}
+{"timestamp":"2026-07-04T17:30:16.906364+00:00","level":"INFO","module":"ForgeAI.Kernel","message":"Initiating Kernel shutdown sequence..."}
+{"timestamp":"2026-07-04T17:30:16.906518+00:00","level":"INFO","module":"ForgeAI.PluginManager","message":"Unloading and shutting down all plugins..."}
+{"timestamp":"2026-07-04T17:30:16.906636+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Shutting down lifecycle component: ForgeAITaskEngine..."}
+{"timestamp":"2026-07-04T17:30:16.906748+00:00","level":"INFO","module":"ForgeAI.TaskEngine","message":"Task Engine shutting down. Cancelling all running DAGs..."}
+{"timestamp":"2026-07-04T17:30:16.906841+00:00","level":"INFO","module":"ForgeAI.TaskEngine","message":"Task Engine shutdown complete."}
+{"timestamp":"2026-07-04T17:30:16.906930+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Shutting down lifecycle component: ForgeAIMemoryService..."}
+{"timestamp":"2026-07-04T17:30:16.907169+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Shutting down lifecycle component: ForgeAIEventBus..."}
+{"timestamp":"2026-07-04T17:30:16.907294+00:00","level":"INFO","module":"ForgeAI.EventBus","message":"Event Bus service shut down. All subscriptions cleared."}
+{"timestamp":"2026-07-04T17:32:58.609225+00:00","level":"INFO","module":"ForgeAI.ModelRouter","message":"Bootstrapping default model provider: 'ollama' (Model: 'qwen', URL: 'http://localhost:11434')"}
+{"timestamp":"2026-07-04T17:32:58.609338+00:00","level":"INFO","module":"ForgeAI.ModelRouter","message":"Registered model provider: 'ollama'"}
+{"timestamp":"2026-07-04T17:32:58.609576+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Initializing lifecycle component: ForgeAIEventBus..."}
+{"timestamp":"2026-07-04T17:32:58.609658+00:00","level":"INFO","module":"ForgeAI.EventBus","message":"Event Bus service initialized."}
+{"timestamp":"2026-07-04T17:32:58.609709+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Initializing lifecycle component: ForgeAIMemoryService..."}
+{"timestamp":"2026-07-04T17:32:58.612603+00:00","level":"INFO","module":"ForgeAI.Memory.Persistence","message":"SQLite DB initialized at forge_data\\databases\\project_memory.db"}
+{"timestamp":"2026-07-04T17:32:58.612747+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Initializing lifecycle component: ForgeAITaskEngine..."}
+{"timestamp":"2026-07-04T17:32:58.612810+00:00","level":"INFO","module":"ForgeAI.TaskEngine","message":"Task Engine service initialized."}
+{"timestamp":"2026-07-04T17:32:58.614511+00:00","level":"WARNING","module":"ForgeAI.PluginManager","message":"Configured plugins directory does not exist: B:\\ForgeAI\\test_plugins"}
+{"timestamp":"2026-07-04T17:32:58.614812+00:00","level":"INFO","module":"ForgeAI.Kernel","message":"ForgeAI Kernel boot complete in 6 ms."}
+{"timestamp":"2026-07-04T17:32:58.615091+00:00","level":"INFO","module":"ForgeAI.Kernel","message":"Initiating Kernel shutdown sequence..."}
+{"timestamp":"2026-07-04T17:32:58.615281+00:00","level":"INFO","module":"ForgeAI.PluginManager","message":"Unloading and shutting down all plugins..."}
+{"timestamp":"2026-07-04T17:32:58.615492+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Shutting down lifecycle component: ForgeAITaskEngine..."}
+{"timestamp":"2026-07-04T17:32:58.615551+00:00","level":"INFO","module":"ForgeAI.TaskEngine","message":"Task Engine shutting down. Cancelling all running DAGs..."}
+{"timestamp":"2026-07-04T17:32:58.615598+00:00","level":"INFO","module":"ForgeAI.TaskEngine","message":"Task Engine shutdown complete."}
+{"timestamp":"2026-07-04T17:32:58.615651+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Shutting down lifecycle component: ForgeAIMemoryService..."}
+{"timestamp":"2026-07-04T17:32:58.616169+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Shutting down lifecycle component: ForgeAIEventBus..."}
+{"timestamp":"2026-07-04T17:32:58.616428+00:00","level":"INFO","module":"ForgeAI.EventBus","message":"Event Bus service shut down. All subscriptions cleared."}
+{"timestamp":"2026-07-04T17:33:57.495330+00:00","level":"INFO","module":"ForgeAI.ModelRouter","message":"Bootstrapping default model provider: 'ollama' (Model: 'qwen', URL: 'http://localhost:11434')"}
+{"timestamp":"2026-07-04T17:33:57.495650+00:00","level":"INFO","module":"ForgeAI.ModelRouter","message":"Registered model provider: 'ollama'"}
+{"timestamp":"2026-07-04T17:33:57.495804+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Initializing lifecycle component: ForgeAIEventBus..."}
+{"timestamp":"2026-07-04T17:33:57.495877+00:00","level":"INFO","module":"ForgeAI.EventBus","message":"Event Bus service initialized."}
+{"timestamp":"2026-07-04T17:33:57.495933+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Initializing lifecycle component: ForgeAIMemoryService..."}
+{"timestamp":"2026-07-04T17:33:57.497855+00:00","level":"INFO","module":"ForgeAI.Memory.Persistence","message":"SQLite DB initialized at forge_data\\databases\\project_memory.db"}
+{"timestamp":"2026-07-04T17:33:57.498002+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Initializing lifecycle component: ForgeAITaskEngine..."}
+{"timestamp":"2026-07-04T17:33:57.498176+00:00","level":"INFO","module":"ForgeAI.TaskEngine","message":"Task Engine service initialized."}
+{"timestamp":"2026-07-04T17:33:57.499872+00:00","level":"WARNING","module":"ForgeAI.PluginManager","message":"Configured plugins directory does not exist: B:\\ForgeAI\\test_plugins"}
+{"timestamp":"2026-07-04T17:33:57.500062+00:00","level":"INFO","module":"ForgeAI.Kernel","message":"ForgeAI Kernel boot complete in 10 ms."}
+{"timestamp":"2026-07-04T17:33:57.500230+00:00","level":"INFO","module":"ForgeAI.Kernel","message":"Initiating Kernel shutdown sequence..."}
+{"timestamp":"2026-07-04T17:33:57.500524+00:00","level":"INFO","module":"ForgeAI.PluginManager","message":"Unloading and shutting down all plugins..."}
+{"timestamp":"2026-07-04T17:33:57.500829+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Shutting down lifecycle component: ForgeAITaskEngine..."}
+{"timestamp":"2026-07-04T17:33:57.500930+00:00","level":"INFO","module":"ForgeAI.TaskEngine","message":"Task Engine shutting down. Cancelling all running DAGs..."}
+{"timestamp":"2026-07-04T17:33:57.500997+00:00","level":"INFO","module":"ForgeAI.TaskEngine","message":"Task Engine shutdown complete."}
+{"timestamp":"2026-07-04T17:33:57.501053+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Shutting down lifecycle component: ForgeAIMemoryService..."}
+{"timestamp":"2026-07-04T17:33:57.501370+00:00","level":"INFO","module":"ForgeAI.LifecycleManager","message":"Shutting down lifecycle component: ForgeAIEventBus..."}
+{"timestamp":"2026-07-04T17:33:57.501454+00:00","level":"INFO","module":"ForgeAI.EventBus","message":"Event Bus service shut down. All subscriptions cleared."}

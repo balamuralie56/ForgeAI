@@ -1,8 +1,8 @@
 """
 Unit and integration tests for the ForgeAI Logging Engine.
 """
+
 import json
-import logging
 import tempfile
 import threading
 import unittest
@@ -14,6 +14,7 @@ from forge_core.logging.engine import LoggingEngine
 
 class MockConfigService:
     """Mock ConfigurationService for testing."""
+
     def __init__(self, log_dir: str):
         self._log_dir = log_dir
 
@@ -28,7 +29,7 @@ class TestLoggingEngine(unittest.TestCase):
         """Sets up a temporary directory and initializes the engine."""
         self.test_dir = tempfile.TemporaryDirectory()
         self.config_service = MockConfigService(self.test_dir.name)
-        self.engine = LoggingEngine(self.config_service) # type: ignore
+        self.engine = LoggingEngine(self.config_service)  # type: ignore
         self.logger = self.engine.get_root_logger()
 
     def tearDown(self) -> None:
@@ -40,19 +41,19 @@ class TestLoggingEngine(unittest.TestCase):
         """Test that logs correctly format as JSON and bind context."""
         module_logger = self.logger.get_logger("PlannerPlugin")
         bound_logger = module_logger.bind_context(task_id="tsk_123")
-        
+
         bound_logger.info("Analyzing requirements")
-        self.engine.shutdown() # Force flush to disk
-        
+        self.engine.shutdown()  # Force flush to disk
+
         log_file = Path(self.test_dir.name) / "forge.log"
         self.assertTrue(log_file.exists())
-        
+
         with open(log_file, "r", encoding="utf-8") as f:
             lines = f.readlines()
-            
+
         self.assertEqual(len(lines), 1)
         data = json.loads(lines[0])
-        
+
         self.assertEqual(data["level"], "INFO")
         self.assertEqual(data["module"], "ForgeAI.PlannerPlugin")
         self.assertEqual(data["message"], "Analyzing requirements")
@@ -60,7 +61,7 @@ class TestLoggingEngine(unittest.TestCase):
 
     def test_thread_safety_concurrency(self) -> None:
         """
-        Stress test to ensure the non-blocking queue drops no logs 
+        Stress test to ensure the non-blocking queue drops no logs
         when blasted by multiple threads simultaneously.
         """
         thread_count = 50
@@ -88,7 +89,11 @@ class TestLoggingEngine(unittest.TestCase):
         with open(log_file, "r", encoding="utf-8") as f:
             lines = f.readlines()
 
-        self.assertEqual(len(lines), total_expected_logs, "Logs were dropped during concurrent writes.")
+        self.assertEqual(
+            len(lines),
+            total_expected_logs,
+            "Logs were dropped during concurrent writes.",
+        )
 
 
 if __name__ == "__main__":

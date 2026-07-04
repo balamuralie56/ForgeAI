@@ -2,6 +2,7 @@
 Plugin Manager implementation for ForgeAI.
 Discovers and loads enabled plugins from the plugin directory dynamically.
 """
+
 import importlib
 import inspect
 import logging
@@ -24,10 +25,7 @@ class PluginManager(PluginManagerService):
     """
 
     def __init__(
-        self,
-        plugin_dir: str,
-        enabled_plugins: List[str],
-        registry: ServiceRegistry
+        self, plugin_dir: str, enabled_plugins: List[str], registry: ServiceRegistry
     ) -> None:
         """
         Initializes the Plugin Manager.
@@ -75,10 +73,10 @@ class PluginManager(PluginManagerService):
             try:
                 # Dynamic import using standard library naming convention
                 module_name = f"{self.plugin_dir.name}.{plugin_name}"
-                
+
                 # Import module/package
                 module = importlib.import_module(module_name)
-                
+
                 # Scan for concrete subclasses of Plugin
                 plugin_cls = None
                 for member_name, member_obj in inspect.getmembers(module):
@@ -89,9 +87,9 @@ class PluginManager(PluginManagerService):
                     ):
                         plugin_cls = member_obj
                         break
-                
+
                 if not plugin_cls:
-                    logger.warning(
+                    logger.info(
                         f"No concrete class subclassing 'Plugin' found in module: {module_name}"
                     )
                     continue
@@ -102,20 +100,26 @@ class PluginManager(PluginManagerService):
                     f"Loading plugin: {plugin_instance.name} (version {plugin_instance.version})..."
                 )
                 plugin_instance.initialize(self.registry)
-                
+
                 self._plugins[plugin_instance.name] = plugin_instance
                 logger.debug(f"Plugin '{plugin_instance.name}' loaded successfully.")
 
             except ModuleNotFoundError as e:
-                # Common when directory is empty or __init__.py is missing
-                logger.warning(
-                    f"Failed to import plugin '{plugin_name}': Module not found. "
-                    f"Ensure directory exists and contains valid Python package structure. Error: {e}"
-                )
+                # Check if it is an empty plugin directory
+                py_files = list(plugin_path.glob("**/*.py"))
+                if not py_files:
+                    logger.info(
+                        f"Failed to import plugin '{plugin_name}': Directory is empty or contains no Python files."
+                    )
+                else:
+                    logger.warning(
+                        f"Failed to import plugin '{plugin_name}': Module not found. "
+                        f"Ensure directory exists and contains valid Python package structure. Error: {e}"
+                    )
             except Exception as e:
                 logger.error(
                     f"Failed to load and initialize plugin '{plugin_name}': {e}",
-                    exc_info=True
+                    exc_info=True,
                 )
 
     def get_plugin(self, name: str) -> Optional[Plugin]:
@@ -152,6 +156,6 @@ class PluginManager(PluginManagerService):
             except Exception as e:
                 logger.error(
                     f"Unhandled error occurred during shutdown of plugin '{name}': {e}",
-                    exc_info=True
+                    exc_info=True,
                 )
         self._plugins.clear()

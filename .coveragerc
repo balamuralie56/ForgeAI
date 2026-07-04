@@ -1,0 +1,28 @@
+[run]
+branch = True
+source = forge_core
+
+[report]
+omit =
+    forge_tests/*
+    forge_docs/*
+    launcher.py
+    setup.py
+    */__pycache__/*
+    */.pytest_cache/*
+    forge_core/configuration/constants.py
+    forge_core/configuration/settings.py
+    forge_core/*/interface.py
+    forge_core/*/service.py
+
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    if self\.debug:
+    raise AssertionError
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    pass
+    @abstractmethod
+
+show_missing = True

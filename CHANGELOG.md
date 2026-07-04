@@ -5,6 +5,31 @@ All notable changes to the ForgeAI project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2026-07-04
+
+### Added
+- **Central Versioning:** Created `forge_core/version.py` defining central metadata attributes, referencing them in the Launcher and Kernel.
+- **Kernel Health Reports:** Implemented `Kernel.health()` returning system health reports, service states, active providers, and boot metrics.
+- **Diagnostics CLI Command:** Introduced `python launcher.py --diagnostics` to dump environmental information in a safe, read-only manner.
+- **Architecture Diagram Generator:** Created `scripts/generate_diagram.py` to auto-maintain Mermaid graphs in `forge_docs/architecture/runtime.md`.
+- **CI Enhancements:** Configured `.coveragerc` rules, `requirements.txt`, and `.github/workflows/ci.yml` to check formatting, linting, typing, and enforce a 90% test coverage minimum.
+
+### Changed
+- **Plugin Loading Warnings:** Downgraded logs from `WARNING` to `INFO` for empty plugin directories.
+
+## [0.3.0] - 2026-07-04
+
+### Added
+- **Event Bus:** Implemented thread-safe `ForgeAIEventBus` supporting synchronous/asynchronous publishing and wildcard subscriptions (`*`).
+- **Memory Engine:** Created `ForgeAIRuntimeMemory` for short-term in-memory tracking and `ForgeAIProjectMemory` backed by a key-value store for durable long-term logs.
+- **SQLite Persistence:** Added `SQLitePersistenceProvider` to persist project memory database locally under `forge_data/databases/project_memory.db`.
+- **Task Engine:** Implemented `ForgeAITaskEngine`, `TaskExecutor`, and `TaskScheduler` to concurrently schedule and execute DAG task configurations.
+- **Fault-Tolerance Retries:** Integrated task-level retry policies with exponential backoff and randomized delay jitter.
+- **Cascading Skips:** Automated recursive state skipping on all child nodes when a parent dependency fails.
+- **Kernel Integration:** Bootstrapped the Event Bus, Memory, and Task Engine directly into the Kernel lifecycle (`initialize()` and `shutdown()`) and `ServiceRegistry`.
+- **Unit and Concurrency Tests:** Added unit and concurrency tests for Event Bus, Memory Engine, and Task Engine under `forge_tests/`.
+- **Documentation:** Added module documentation under `forge_docs/modules/` and Sprint 3 Technical Design.
+
 ## [Unreleased] - Phase 1 Active Development
 
 ### Added

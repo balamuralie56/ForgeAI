@@ -2,6 +2,7 @@
 Service interface for the ForgeAI Kernel.
 Core and plugin modules should depend on this interface.
 """
+
 from abc import ABC, abstractmethod
 
 from .service_registry import ServiceRegistry
@@ -34,5 +35,15 @@ class Kernel(ABC):
     def shutdown(self) -> None:
         """
         Triggers orderly graceful teardown of all loaded systems.
+        """
+        pass
+
+    @abstractmethod
+    def health(self) -> dict:
+        """
+        Retrieves a structured health report containing statuses of all core services.
+
+        Returns:
+            dict: The system health report.
         """
         pass

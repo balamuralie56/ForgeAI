@@ -2,6 +2,7 @@
 Service interfaces for the ForgeAI Logging Engine.
 Plugins and core modules should depend on this interface, not the concrete logger.
 """
+
 from typing import Any, Protocol
 
 
@@ -31,22 +32,22 @@ class LoggingService(Protocol):
         """Log a critical system failure."""
         ...
 
-    def get_logger(self, module_name: str) -> 'LoggingService':
+    def get_logger(self, module_name: str) -> "LoggingService":
         """
         Creates a child logger bound to a specific module or plugin name.
-        
+
         Args:
             module_name (str): The name of the module (e.g., 'PlannerPlugin').
-            
+
         Returns:
             LoggingService: A new logger instance scoped to the module.
         """
         ...
 
-    def bind_context(self, **kwargs: Any) -> 'LoggingService':
+    def bind_context(self, **kwargs: Any) -> "LoggingService":
         """
         Binds contextual data (like task_id) to all subsequent logs from this instance.
-        
+
         Returns:
             LoggingService: The context-bound logger instance.
         """

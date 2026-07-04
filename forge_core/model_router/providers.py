@@ -2,6 +2,7 @@
 Concrete implementations of ModelProvider for local LLM clients (Ollama and OpenAI-compatible APIs).
 Uses only standard Python libraries (urllib) to keep the engine lightweight.
 """
+
 import json
 import urllib.error
 import urllib.request
@@ -16,7 +17,9 @@ class BaseHTTPProvider(ModelProvider):
     Base class containing shared logic for submitting HTTP requests to LLM APIs.
     """
 
-    def __init__(self, name: str, base_url: str, default_model: str, timeout: float = 60.0) -> None:
+    def __init__(
+        self, name: str, base_url: str, default_model: str, timeout: float = 60.0
+    ) -> None:
         """
         Initializes the base HTTP model provider.
 
@@ -52,9 +55,7 @@ class BaseHTTPProvider(ModelProvider):
         url = f"{self.base_url}{path}"
         data = json.dumps(payload).encode("utf-8")
         req = urllib.request.Request(
-            url=url,
-            data=data,
-            headers={"Content-Type": "application/json"}
+            url=url, data=data, headers={"Content-Type": "application/json"}
         )
 
         try:
@@ -89,17 +90,16 @@ class OllamaProvider(BaseHTTPProvider):
     Inference client for local Ollama instances.
     """
 
-    def __init__(self, base_url: str, default_model: str, timeout: float = 60.0) -> None:
+    def __init__(
+        self, base_url: str, default_model: str, timeout: float = 60.0
+    ) -> None:
         super().__init__("ollama", base_url, default_model, timeout)
 
     def generate(
-        self,
-        prompt: str,
-        model: Optional[str] = None,
-        **kwargs: Any
+        self, prompt: str, model: Optional[str] = None, **kwargs: Any
     ) -> ModelResponse:
         target_model = model or self.default_model
-        
+
         # Build options mapping standard parameters to Ollama format
         options: Dict[str, Any] = {}
         if "temperature" in kwargs:
@@ -118,7 +118,7 @@ class OllamaProvider(BaseHTTPProvider):
             payload["options"] = options
 
         raw_response = self._post_request("/api/generate", payload)
-        
+
         # Map token usage if available in the Ollama response
         prompt_eval = raw_response.get("prompt_eval_count", 0)
         eval_count = raw_response.get("eval_count", 0)
@@ -132,17 +132,14 @@ class OllamaProvider(BaseHTTPProvider):
             text=raw_response.get("response", ""),
             raw_response=raw_response,
             model_name=target_model,
-            usage=usage
+            usage=usage,
         )
 
     def generate_chat(
-        self,
-        messages: List[Dict[str, str]],
-        model: Optional[str] = None,
-        **kwargs: Any
+        self, messages: List[Dict[str, str]], model: Optional[str] = None, **kwargs: Any
     ) -> ModelResponse:
         target_model = model or self.default_model
-        
+
         options: Dict[str, Any] = {}
         if "temperature" in kwargs:
             options["temperature"] = kwargs["temperature"]
@@ -160,7 +157,7 @@ class OllamaProvider(BaseHTTPProvider):
             payload["options"] = options
 
         raw_response = self._post_request("/api/chat", payload)
-        
+
         # Map token usage
         prompt_eval = raw_response.get("prompt_eval_count", 0)
         eval_count = raw_response.get("eval_count", 0)
@@ -175,7 +172,7 @@ class OllamaProvider(BaseHTTPProvider):
             text=content,
             raw_response=raw_response,
             model_name=target_model,
-            usage=usage
+            usage=usage,
         )
 
 
@@ -184,15 +181,14 @@ class OpenAICompatibleProvider(BaseHTTPProvider):
     Inference client for OpenAI-compatible local servers (e.g. LM Studio, vLLM, localai).
     """
 
-    def __init__(self, base_url: str, default_model: str, timeout: float = 60.0) -> None:
+    def __init__(
+        self, base_url: str, default_model: str, timeout: float = 60.0
+    ) -> None:
         # Default name is 'openai', but can be registered under custom instances
         super().__init__("openai", base_url, default_model, timeout)
 
     def generate(
-        self,
-        prompt: str,
-        model: Optional[str] = None,
-        **kwargs: Any
+        self, prompt: str, model: Optional[str] = None, **kwargs: Any
     ) -> ModelResponse:
         target_model = model or self.default_model
         payload = {
@@ -200,17 +196,23 @@ class OpenAICompatibleProvider(BaseHTTPProvider):
             "prompt": prompt,
             "stream": False,
         }
-        
+
         # Map kwargs
-        for param in ["temperature", "max_tokens", "top_p", "presence_penalty", "frequency_penalty"]:
+        for param in [
+            "temperature",
+            "max_tokens",
+            "top_p",
+            "presence_penalty",
+            "frequency_penalty",
+        ]:
             if param in kwargs:
                 payload[param] = kwargs[param]
 
         raw_response = self._post_request("/completions", payload)
-        
+
         choices = raw_response.get("choices", [])
         text = choices[0].get("text", "") if choices else ""
-        
+
         usage_data = raw_response.get("usage", {})
         usage = {
             "prompt_tokens": usage_data.get("prompt_tokens", 0),
@@ -219,17 +221,11 @@ class OpenAICompatibleProvider(BaseHTTPProvider):
         }
 
         return ModelResponse(
-            text=text,
-            raw_response=raw_response,
-            model_name=target_model,
-            usage=usage
+            text=text, raw_response=raw_response, model_name=target_model, usage=usage
         )
 
     def generate_chat(
-        self,
-        messages: List[Dict[str, str]],
-        model: Optional[str] = None,
-        **kwargs: Any
+        self, messages: List[Dict[str, str]], model: Optional[str] = None, **kwargs: Any
     ) -> ModelResponse:
         target_model = model or self.default_model
         payload = {
@@ -237,16 +233,22 @@ class OpenAICompatibleProvider(BaseHTTPProvider):
             "messages": messages,
             "stream": False,
         }
-        
-        for param in ["temperature", "max_tokens", "top_p", "presence_penalty", "frequency_penalty"]:
+
+        for param in [
+            "temperature",
+            "max_tokens",
+            "top_p",
+            "presence_penalty",
+            "frequency_penalty",
+        ]:
             if param in kwargs:
                 payload[param] = kwargs[param]
 
         raw_response = self._post_request("/chat/completions", payload)
-        
+
         choices = raw_response.get("choices", [])
         content = choices[0].get("message", {}).get("content", "") if choices else ""
-        
+
         usage_data = raw_response.get("usage", {})
         usage = {
             "prompt_tokens": usage_data.get("prompt_tokens", 0),
@@ -258,5 +260,5 @@ class OpenAICompatibleProvider(BaseHTTPProvider):
             text=content,
             raw_response=raw_response,
             model_name=target_model,
-            usage=usage
+            usage=usage,
         )

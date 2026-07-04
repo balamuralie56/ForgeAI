@@ -2,6 +2,7 @@
 Service interface for the ForgeAI Plugin Manager.
 Core components and plugins should depend on this interface, not concrete classes.
 """
+
 from abc import ABC, abstractmethod
 from typing import List, Optional
 

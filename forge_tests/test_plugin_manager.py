@@ -2,13 +2,13 @@
 Unit tests for the ForgeAI Plugin Manager.
 Tests dynamic package discovery, class inspection, and integration.
 """
+
 import sys
 import tempfile
 import unittest
 from pathlib import Path
 
 from forge_core.kernel.service_registry import ServiceRegistry
-from forge_core.plugin_manager.interface import Plugin
 from forge_core.plugin_manager.manager import PluginManager
 
 
@@ -19,7 +19,7 @@ class TestPluginManager(unittest.TestCase):
         self.temp_dir = tempfile.TemporaryDirectory()
         self.plugin_dir_path = Path(self.temp_dir.name) / "test_plugins"
         self.plugin_dir_path.mkdir()
-        
+
         self.registry = ServiceRegistry()
         self.original_sys_path = sys.path.copy()
 
@@ -55,23 +55,23 @@ class MockTestPlugin(Plugin):
         pass
 """
         self._create_mock_plugin("mock_test", code)
-        
+
         manager = PluginManager(
             plugin_dir=str(self.plugin_dir_path),
             enabled_plugins=["mock_test"],
-            registry=self.registry
+            registry=self.registry,
         )
-        
+
         manager.load_plugins()
-        
+
         loaded = manager.get_plugin("MockTest")
         self.assertIsNotNone(loaded)
         self.assertEqual(loaded.name, "MockTest")  # type: ignore
         self.assertEqual(loaded.version, "1.0.2")  # type: ignore
-        
+
         # Verify initialize was called and registered the string
         self.assertEqual(self.registry.resolve(str), "initialized_string_value")
-        
+
         manager.shutdown_all()
         self.assertEqual(len(manager.get_all_plugins()), 0)
 
@@ -79,34 +79,37 @@ class MockTestPlugin(Plugin):
         manager = PluginManager(
             plugin_dir=str(self.plugin_dir_path),
             enabled_plugins=["missing_folder_plugin"],
-            registry=self.registry
+            registry=self.registry,
         )
-        
+
         # Should not raise error
         with self.assertLogs("ForgeAI.PluginManager", level="WARNING") as logs:
             manager.load_plugins()
             self.assertIn("Enabled plugin directory is missing", logs.output[0])
-            
+
         self.assertEqual(len(manager.get_all_plugins()), 0)
 
     def test_empty_plugin_folder_skips_gracefully(self) -> None:
         # Create folder but no __init__.py/code
         folder = self.plugin_dir_path / "empty_plugin"
         folder.mkdir()
-        
+
         manager = PluginManager(
             plugin_dir=str(self.plugin_dir_path),
             enabled_plugins=["empty_plugin"],
-            registry=self.registry
+            registry=self.registry,
         )
-        
-        with self.assertLogs("ForgeAI.PluginManager", level="WARNING") as logs:
+
+        with self.assertLogs("ForgeAI.PluginManager", level="INFO") as logs:
             manager.load_plugins()
-            self.assertTrue(any(
-                "Failed to import plugin" in line or "No concrete class subclassing" in line
-                for line in logs.output
-            ))
-            
+            self.assertTrue(
+                any(
+                    "Failed to import plugin" in line
+                    or "No concrete class subclassing" in line
+                    for line in logs.output
+                )
+            )
+
         self.assertEqual(len(manager.get_all_plugins()), 0)
 
     def test_malformed_plugin_class_skips(self) -> None:
@@ -118,17 +121,19 @@ class MalformedClass:
         return "Malformed"
 """
         self._create_mock_plugin("malformed", code)
-        
+
         manager = PluginManager(
             plugin_dir=str(self.plugin_dir_path),
             enabled_plugins=["malformed"],
-            registry=self.registry
+            registry=self.registry,
         )
-        
-        with self.assertLogs("ForgeAI.PluginManager", level="WARNING") as logs:
+
+        with self.assertLogs("ForgeAI.PluginManager", level="INFO") as logs:
             manager.load_plugins()
-            self.assertIn("No concrete class subclassing 'Plugin' found", logs.output[0])
-            
+            self.assertIn(
+                "No concrete class subclassing 'Plugin' found", logs.output[0]
+            )
+
         self.assertEqual(len(manager.get_all_plugins()), 0)
 
 

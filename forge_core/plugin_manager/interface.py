@@ -2,6 +2,7 @@
 Interface definitions for ForgeAI plugins.
 All system plugins must subclass the Plugin interface.
 """
+
 from abc import ABC, abstractmethod
 
 from forge_core.kernel.service_registry import ServiceRegistry

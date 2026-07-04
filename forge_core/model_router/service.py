@@ -2,6 +2,7 @@
 Service interfaces for the ForgeAI Model Router.
 Allows decoupling code from concrete LLM provider APIs (e.g. Ollama, OpenAI).
 """
+
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
@@ -12,6 +13,7 @@ class ModelResponse:
     """
     Immutable representation of an LLM generation result.
     """
+
     text: str
     raw_response: Dict[str, Any]
     model_name: str
@@ -36,10 +38,7 @@ class ModelProvider(ABC):
 
     @abstractmethod
     def generate(
-        self,
-        prompt: str,
-        model: Optional[str] = None,
-        **kwargs: Any
+        self, prompt: str, model: Optional[str] = None, **kwargs: Any
     ) -> ModelResponse:
         """
         Submits a raw text completion request.
@@ -56,10 +55,7 @@ class ModelProvider(ABC):
 
     @abstractmethod
     def generate_chat(
-        self,
-        messages: List[Dict[str, str]],
-        model: Optional[str] = None,
-        **kwargs: Any
+        self, messages: List[Dict[str, str]], model: Optional[str] = None, **kwargs: Any
     ) -> ModelResponse:
         """
         Submits a structured chat/conversation request.

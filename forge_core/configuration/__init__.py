@@ -1,6 +1,7 @@
 """
 ForgeAI Configuration Module
 """
+
 from .config_manager import ConfigurationManager
 from .models import ForgeConfig, ModelSettings, PluginSettings, SystemSettings
 

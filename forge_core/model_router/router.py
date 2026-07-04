@@ -2,6 +2,7 @@
 Model Router implementation for ForgeAI.
 Acts as a mediator resolving ModelProviders and routing LLM generation calls.
 """
+
 import logging
 from typing import Any, Dict, List, Optional
 
@@ -29,7 +30,7 @@ class ModelRouter(ModelRouterService):
         """
         self._config_service: ConfigurationService = config_service
         self._providers: Dict[str, ModelProvider] = {}
-        
+
         # Load and bootstrap default provider from settings
         self._bootstrap_default_provider()
 
@@ -50,7 +51,9 @@ class ModelRouter(ModelRouterService):
             provider = OllamaProvider(base_url=base_url, default_model=default_model)
         else:
             # Fallback/default to OpenAI-compatible for any other configured provider (LM Studio, vLLM, etc.)
-            provider = OpenAICompatibleProvider(base_url=base_url, default_model=default_model)
+            provider = OpenAICompatibleProvider(
+                base_url=base_url, default_model=default_model
+            )
             # Ensure custom provider names map correctly to the class name property
             provider._name = provider_name  # type: ignore
 
@@ -82,7 +85,9 @@ class ModelRouter(ModelRouterService):
         """
         name_lower = name.lower()
         if name_lower not in self._providers:
-            raise ProviderNotFoundError(f"Model provider '{name}' has not been registered.")
+            raise ProviderNotFoundError(
+                f"Model provider '{name}' has not been registered."
+            )
         return self._providers[name_lower]
 
     def generate(
@@ -90,19 +95,19 @@ class ModelRouter(ModelRouterService):
         prompt: str,
         provider: Optional[str] = None,
         model: Optional[str] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> ModelResponse:
         settings = self._config_service.get_model_settings()
         target_provider_name = (provider or settings.provider).lower()
-        
+
         # Resolve target provider
         client = self.get_provider(target_provider_name)
-        
+
         # Merge configuration defaults with explicitly passed overrides
         inference_params = {
             "temperature": kwargs.get("temperature", settings.temperature),
             "max_tokens": kwargs.get("max_tokens", settings.max_tokens),
-            **kwargs
+            **kwargs,
         }
 
         logger.debug(
@@ -115,17 +120,17 @@ class ModelRouter(ModelRouterService):
         messages: List[Dict[str, str]],
         provider: Optional[str] = None,
         model: Optional[str] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> ModelResponse:
         settings = self._config_service.get_model_settings()
         target_provider_name = (provider or settings.provider).lower()
-        
+
         client = self.get_provider(target_provider_name)
-        
+
         inference_params = {
             "temperature": kwargs.get("temperature", settings.temperature),
             "max_tokens": kwargs.get("max_tokens", settings.max_tokens),
-            **kwargs
+            **kwargs,
         }
 
         logger.debug(
