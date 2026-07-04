@@ -9,9 +9,10 @@ import time
 from pathlib import Path
 from typing import List
 
-from forge_core.configuration.config_manager import ConfigurationManager
 from forge_core.configuration.exceptions import ConfigurationError
-from forge_core.logging.engine import LoggingEngine
+from forge_core.configuration.service import ConfigurationService
+from forge_core.kernel.kernel import ForgeAIKernel
+from forge_core.kernel.exceptions import KernelError
 
 
 class ForgeAILauncher:
@@ -19,8 +20,9 @@ class ForgeAILauncher:
 
     def __init__(self) -> None:
         self.version: str = "0.1"
-        self.config_manager: ConfigurationManager | None = None
-        self.logging_engine: LoggingEngine | None = None
+        self.config_manager = None
+        self.logging_engine = None
+        self.kernel: ForgeAIKernel | None = None
 
         # Define the strict internal directory structure required for ForgeAI to operate
         self.required_directories: List[Path] = [
@@ -40,16 +42,19 @@ class ForgeAILauncher:
 
     def print_banner(self) -> None:
         """Outputs the formatted ForgeAI boot banner to the console."""
+        kernel_status = "✓ Ready" if (self.kernel and self.kernel._booted) else "Not initialized"
+        num_plugins = len(self.kernel.plugin_manager.get_all_plugins()) if self.kernel and self.kernel.plugin_manager else 0
+
         print("====================================================")
         print("ForgeAI Operating System")
         print(f"Version {self.version}")
         print("====================================================")
-        print(f"{'Loading Configuration...':<30} ✓ Success")
-        print(f"{'Loading Logger...':<30} ✓ Success")
-        print(f"{'Workspace...':<30} ✓ Ready")
-        print(f"{'Plugins...':<30} 0 Loaded")
-        print(f"{'Kernel...':<30} Not initialized")
-        print(f"{'Task Engine...':<30} Not initialized")
+        print(f"{'Loading Configuration...':<34} ✓ Success")
+        print(f"{'Loading Logger...':<34} ✓ Success")
+        print(f"{'Workspace...':<34} ✓ Ready")
+        print(f"{'Plugins...':<34} {num_plugins} Loaded")
+        print(f"{'Kernel...':<34} {kernel_status}")
+        print(f"{'Task Engine...':<34} Not initialized")
         print("====================================================")
         print("ForgeAI Ready")
         print("====================================================")
@@ -65,11 +70,14 @@ class ForgeAILauncher:
             # 1. Guarantee filesystem state
             self.ensure_directories()
 
-            # 2. Initialize Configuration
-            self.config_manager = ConfigurationManager()
+            # 2. Instantiate and boot Kernel
+            self.kernel = ForgeAIKernel()
+            self.kernel.boot()
 
-            # 3. Initialize Logging Engine
-            self.logging_engine = LoggingEngine(self.config_manager)
+            # 3. Expose backward-compatible attributes
+            self.config_manager = self.kernel.config_manager  # type: ignore
+            self.logging_engine = self.kernel.logging_engine
+
             logger = self.logging_engine.get_root_logger().get_logger("Bootstrapper")
             logger.info("ForgeAI boot sequence initiated.")
 
@@ -79,17 +87,17 @@ class ForgeAILauncher:
             logger.info("ForgeAI boot sequence completed successfully.")
             return 0
 
-        except ConfigurationError as e:
-            print(f"\n[CRITICAL FAILURE] ForgeAI Configuration Error: {e}")
+        except (ConfigurationError, KernelError) as e:
+            print(f"\n[CRITICAL FAILURE] ForgeAI Kernel Boot Error: {e}")
             return 1
         except Exception as e:
             print(f"\n[FATAL ERROR] Unexpected system failure during boot: {e}")
             return 1
 
     def shutdown(self) -> None:
-        """Gracefully tears down the operating system, flushing logs."""
-        if self.logging_engine:
-            self.logging_engine.shutdown()
+        """Gracefully tears down the operating system, shutting down Kernel and flushing logs."""
+        if self.kernel:
+            self.kernel.shutdown()
 
 
 def main() -> None:

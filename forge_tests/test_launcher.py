@@ -82,7 +82,7 @@ class TestForgeAILauncher(unittest.TestCase):
         self.assertIn("ForgeAI Operating System", output)
         self.assertIn("Loading Configuration...           ✓ Success", output)
         self.assertIn("Workspace...                       ✓ Ready", output)
-        self.assertIn("Kernel...                          Not initialized", output)
+        self.assertIn("Kernel...                          ✓ Ready", output)
         self.assertIn("ForgeAI Ready", output)
 
     def test_graceful_shutdown(self) -> None:
