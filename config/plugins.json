@@ -1,0 +1,8 @@
+{
+    "enabled": [
+        "planner",
+        "architect",
+        "developer",
+        "tester"
+    ]
+}

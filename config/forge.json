@@ -1,0 +1,7 @@
+{
+    "app_name": "ForgeAI",
+    "version": "0.1.0",
+    "debug": true,
+    "default_model": "qwen2.5-coder:7b",
+    "workspace": "forge_workspace"
+}
