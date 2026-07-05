@@ -1,0 +1,25 @@
+"""
+Backend Generator component for the Developer Plugin.
+"""
+
+from forge_plugins.developer.utils.pipeline import PipelineStep, ImplementationContext
+from forge_plugins.developer.utils.prompt_helper import load_prompt_and_generate
+
+
+class BackendGenerator(PipelineStep):
+    """Generates backend services, business logic, and app entrypoints."""
+
+    @property
+    def name(self) -> str:
+        return "Backend Generator"
+
+    def run(self, context: ImplementationContext) -> None:
+        """
+        Runs the backend generator, extending generated files in-context.
+
+        Args:
+            context (ImplementationContext): Shared pipeline context.
+        """
+        context.logger.info("Executing backend generator step...")
+        files = load_prompt_and_generate(context, "backend", "backend")
+        context.generated_files.extend(files)

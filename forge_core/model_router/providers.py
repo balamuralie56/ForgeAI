@@ -18,7 +18,7 @@ class BaseHTTPProvider(ModelProvider):
     """
 
     def __init__(
-        self, name: str, base_url: str, default_model: str, timeout: float = 60.0
+        self, name: str, base_url: str, default_model: str, timeout: float = 300.0
     ) -> None:
         """
         Initializes the base HTTP model provider.
@@ -91,7 +91,7 @@ class OllamaProvider(BaseHTTPProvider):
     """
 
     def __init__(
-        self, base_url: str, default_model: str, timeout: float = 60.0
+        self, base_url: str, default_model: str, timeout: float = 300.0
     ) -> None:
         super().__init__("ollama", base_url, default_model, timeout)
 
@@ -182,7 +182,7 @@ class OpenAICompatibleProvider(BaseHTTPProvider):
     """
 
     def __init__(
-        self, base_url: str, default_model: str, timeout: float = 60.0
+        self, base_url: str, default_model: str, timeout: float = 300.0
     ) -> None:
         # Default name is 'openai', but can be registered under custom instances
         super().__init__("openai", base_url, default_model, timeout)
