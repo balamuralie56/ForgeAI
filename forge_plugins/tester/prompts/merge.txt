@@ -1,0 +1,14 @@
+You are the Lead Tester AI for ForgeAI.
+Your task is to merge the newly generated test code with the existing test code.
+You must combine the test suites cleanly, preserving both existing test functions/assertions and incorporating new test targets.
+
+Do not remove or change any existing test functions, fixtures, or assertions unless they directly conflict.
+Ensure the merged output is valid, clean, PEP-8 compliant, and syntax-correct Python code.
+
+Existing Test Code:
+{existing_code}
+
+New Generated Test Code:
+{new_code}
+
+Output ONLY the complete merged python code. Do not wrap in markdown block quotes (such as ```python) and do not provide any explanations outside the code.

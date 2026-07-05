@@ -12,12 +12,17 @@ class SystemSettings:
     workspace_dir: str = "forge_workspace"
     log_dir: str = "forge_data/logs"
     log_level: str = "INFO"
+    coverage_threshold: float = 90.0
 
     def __post_init__(self) -> None:
         valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
         if self.log_level.upper() not in valid_levels:
             raise ConfigurationValidationError(
                 f"Invalid log_level: {self.log_level}. Must be one of {valid_levels}"
+            )
+        if not (0.0 <= self.coverage_threshold <= 100.0):
+            raise ConfigurationValidationError(
+                f"Coverage threshold must be between 0.0 and 100.0. Got: {self.coverage_threshold}"
             )
 
 

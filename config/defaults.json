@@ -4,7 +4,8 @@
     "system": {
         "workspace_dir": "forge_workspace",
         "log_dir": "forge_data/logs",
-        "log_level": "INFO"
+        "log_level": "INFO",
+        "coverage_threshold": 90.0
     },
     "models": {
         "provider": "ollama",
