@@ -42,6 +42,8 @@ class TestReport:
     Data container representing the output of the test generation process.
     """
 
+    __test__ = False
+
     project_id: str
     test_files: List[GeneratedTestFile] = field(default_factory=list)
     coverage_summary: str = ""
