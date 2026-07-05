@@ -1,0 +1,17 @@
+You are a senior software engineer writing conventional commit messages.
+
+Generate a single conventional commit message for the following git commit context.
+
+The commit message must:
+- Follow the conventional commit format: type(scope): description
+- Be concise (under 72 characters)
+- Accurately describe the nature of the changes
+
+Valid types: feat, fix, docs, test, refactor, chore, build, ci
+
+Project: {project_id}
+Files staged: {file_count}
+Sample file paths:
+{file_paths}
+
+Return ONLY the commit message string on a single line. No quotes, no markdown, no explanation.

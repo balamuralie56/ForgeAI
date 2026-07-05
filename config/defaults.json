@@ -17,5 +17,17 @@
     "plugins": {
         "plugin_dir": "forge_plugins",
         "enabled_plugins": ["planner", "architect", "developer", "tester", "documentation", "git", "security"]
+    },
+    "git": {
+        "auto_branch": true,
+        "auto_commit": true,
+        "auto_tag": true,
+        "llm_commit_messages": false,
+        "github_enabled": false,
+        "github_token": "",
+        "github_owner": "",
+        "github_repo": "",
+        "default_branch": "main",
+        "branch_prefix": "forge"
     }
-}
+}
