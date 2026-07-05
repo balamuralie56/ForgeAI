@@ -55,6 +55,13 @@ def parse_json_response(text: str) -> Dict[str, Any]:
     Robust JSON parser handling potential markdown and formatting junk in LLM outputs.
     """
     cleaned = text.strip()
+    
+    # Try parsing directly first in case it is already valid JSON (e.g., containing nested markdown code blocks)
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError:
+        pass
+
     # Strip markdown block quotes (e.g. ```json ... ```)
     match = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", cleaned)
     if match:
@@ -73,6 +80,7 @@ def parse_json_response(text: str) -> Dict[str, Any]:
         raise PlanningInferenceError(
             f"Failed to parse LLM response as JSON: {e}. Raw text: {text}"
         )
+
 
 
 def execute_placeholder_task(task_id: str) -> Dict[str, Any]:
