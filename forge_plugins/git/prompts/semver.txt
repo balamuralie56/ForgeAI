@@ -1,0 +1,14 @@
+You are an expert in semantic versioning (SemVer 2.0).
+
+Analyse the following git commit log and determine the appropriate version bump type.
+
+Rules:
+- MAJOR: breaking changes, incompatible API changes, or "breaking change" in commit messages
+- MINOR: new features, new functionality added in a backward-compatible manner (feat:, add:, new:)
+- PATCH: bug fixes, refactoring, documentation, tests, or minor improvements
+
+Commit log:
+{commit_log}
+
+Respond with a valid JSON object only. No markdown, no extra text. Example:
+{{"bump_type": "MINOR", "rationale": "New features were added in a backward-compatible way."}}

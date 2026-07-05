@@ -3,3 +3,4 @@ pytest-cov>=4.1.0
 black>=24.0.0
 ruff>=0.3.0
 mypy>=1.9.0
+PyGithub>=2.1.1

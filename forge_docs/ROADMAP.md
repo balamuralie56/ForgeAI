@@ -60,8 +60,8 @@ This document serves as the project's north star, outlining the historical miles
 
 ### [v0.8.0] — Git Integration
 - **Focus**: Git Plugin.
-- **Status**: Planned.
-- **Deliverables**: Branch orchestrator, semantic versioning, pull request description generators, and merge checklists.
+- **Status**: Completed.
+- **Deliverables**: Full local Git automation (branch, commit, semver, tag, changelog), optional GitHub PR creation via PyGithub (config-gated), `ci_manifest.json` output for CI/CD pipelines, LLM-enhanced commit messages (opt-in), and 30+ unit tests.
 
 ### [v0.9.0] — Workflow & Orchestration
 - **Focus**: Workflow Orchestrator.

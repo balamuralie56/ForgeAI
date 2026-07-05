@@ -1,0 +1,18 @@
+You are a senior technical writer generating a structured CHANGELOG.md.
+
+Generate a complete, well-formatted CHANGELOG.md in Keep a Changelog format (https://keepachangelog.com/).
+
+Project: {project_id}
+Version: {version}
+
+Commits since last release:
+{commits}
+
+The CHANGELOG must:
+- Begin with a top-level heading: # Changelog
+- Include a version section: ## [{version}]
+- Classify changes under subsections: Added, Changed, Fixed, Removed (only include non-empty sections)
+- Be written in plain markdown — no code blocks, no JSON
+- End with: *Changelog generated autonomously by ForgeAI.*
+
+Return ONLY the markdown content. No preamble, no explanation.
