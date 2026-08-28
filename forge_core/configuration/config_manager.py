@@ -120,6 +120,10 @@ class ConfigurationManager(ConfigurationService):
             data.setdefault("models", {})["default_model"] = os.environ.get(
                 "FORGE_MODEL"
             )
+        if os.environ.get("FORGE_REQUEST_TIMEOUT"):
+            data.setdefault("models", {})["request_timeout"] = float(
+                os.environ["FORGE_REQUEST_TIMEOUT"]
+            )
         if os.environ.get("FORGE_GITHUB_TOKEN"):
             data.setdefault("git", {})["github_token"] = os.environ.get(
                 "FORGE_GITHUB_TOKEN"

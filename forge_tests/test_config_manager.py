@@ -123,6 +123,19 @@ class TestConfigurationManager(unittest.TestCase):
         finally:
             del os.environ["FORGE_GITHUB_TOKEN"]
 
+    def test_request_timeout_environment_override(self) -> None:
+        """FORGE_REQUEST_TIMEOUT should override models.request_timeout, letting
+        users tune the LLM HTTP timeout for their own hardware without editing JSON."""
+        os.environ["FORGE_REQUEST_TIMEOUT"] = "45.5"
+
+        try:
+            manager = ConfigurationManager(
+                config_path=str(self.config_file), defaults_path=str(self.defaults_file)
+            )
+            self.assertEqual(manager.get_model_settings().request_timeout, 45.5)
+        finally:
+            del os.environ["FORGE_REQUEST_TIMEOUT"]
+
     def test_save_configuration_public_api(self) -> None:
         """Issue 1 & 2: Tests saving via public API and standardized backup naming."""
         self.config_file.write_text("{}", encoding="utf-8")

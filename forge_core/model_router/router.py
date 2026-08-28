@@ -46,13 +46,21 @@ class ModelRouter(ModelRouterService):
             f"(Model: '{default_model}', URL: '{base_url}')"
         )
 
+        request_timeout = settings.request_timeout
+
         provider: ModelProvider
         if provider_name == "ollama":
-            provider = OllamaProvider(base_url=base_url, default_model=default_model)
+            provider = OllamaProvider(
+                base_url=base_url,
+                default_model=default_model,
+                timeout=request_timeout,
+            )
         else:
             # Fallback/default to OpenAI-compatible for any other configured provider (LM Studio, vLLM, etc.)
             provider = OpenAICompatibleProvider(
-                base_url=base_url, default_model=default_model
+                base_url=base_url,
+                default_model=default_model,
+                timeout=request_timeout,
             )
             # Ensure custom provider names map correctly to the class name property
             provider._name = provider_name  # type: ignore

@@ -33,6 +33,10 @@ class ModelSettings:
     base_url: str
     temperature: float
     max_tokens: int
+    # Local CPU-bound inference can legitimately take several minutes for a
+    # single structured generation. 900s matches the developer stage's
+    # WorkflowStage timeout, the largest of any pipeline stage.
+    request_timeout: float = 900.0
 
     def __post_init__(self) -> None:
         if not (0.0 <= self.temperature <= 2.0):
@@ -46,6 +50,10 @@ class ModelSettings:
         if not self.base_url.startswith(("http://", "https://")):
             raise ConfigurationValidationError(
                 "base_url must include http:// or https://"
+            )
+        if self.request_timeout <= 0:
+            raise ConfigurationValidationError(
+                f"request_timeout must be positive. Got: {self.request_timeout}"
             )
 
 
