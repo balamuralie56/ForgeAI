@@ -72,7 +72,8 @@ class WorkflowOrchestrator:
                 )
             stages = custom_stages
         else:
-            stages = self.get_default_stages(workflow_type)
+            llm_timeout = self._config.get_model_settings().request_timeout
+            stages = self.get_default_stages(workflow_type, llm_timeout=llm_timeout)
 
         workflow = Workflow(
             id=workflow_id,
@@ -312,8 +313,20 @@ class WorkflowOrchestrator:
         return action
 
     @staticmethod
-    def get_default_stages(workflow_type: WorkflowType) -> List[WorkflowStage]:
-        """Returns the default stages list for a specific workflow type."""
+    def get_default_stages(
+        workflow_type: WorkflowType, llm_timeout: float = 900.0
+    ) -> List[WorkflowStage]:
+        """
+        Returns the default stages list for a specific workflow type.
+
+        Args:
+            workflow_type (WorkflowType): Which default pipeline to build.
+            llm_timeout (float): Ceiling (seconds) for a single stage's LLM-bound
+                work, sourced from ModelSettings.request_timeout by create_workflow
+                so the orchestration-level timeout can never be tighter than the
+                provider's own HTTP timeout - a stage timeout below that would
+                silently cut off a request the provider was configured to allow.
+        """
         from forge_plugins.planner.service import PlannerService
         from forge_plugins.architect.service import ArchitectService
         from forge_plugins.developer.service import DeveloperService
@@ -330,7 +343,7 @@ class WorkflowOrchestrator:
                 method_name="plan_project",
                 retry_count=1,
                 retry_delay=2.0,
-                timeout=600.0,
+                timeout=llm_timeout,
                 optional=False,
                 critical=True,
             ),
@@ -340,7 +353,7 @@ class WorkflowOrchestrator:
                 method_name="design_architecture",
                 retry_count=1,
                 retry_delay=2.0,
-                timeout=600.0,
+                timeout=llm_timeout,
                 optional=False,
                 critical=True,
             ),
@@ -350,7 +363,9 @@ class WorkflowOrchestrator:
                 method_name="implement_project",
                 retry_count=1,
                 retry_delay=5.0,
-                timeout=900.0,
+                # Likely generates several files, each its own LLM call, so the
+                # whole stage needs more headroom than any single request.
+                timeout=llm_timeout * 2,
                 optional=False,
                 critical=True,
             ),
@@ -360,7 +375,7 @@ class WorkflowOrchestrator:
                 method_name="test_project",
                 retry_count=1,
                 retry_delay=5.0,
-                timeout=600.0,
+                timeout=llm_timeout,
                 optional=False,
                 critical=True,
             ),
@@ -370,7 +385,7 @@ class WorkflowOrchestrator:
                 method_name="document_project",
                 retry_count=1,
                 retry_delay=2.0,
-                timeout=600.0,
+                timeout=llm_timeout,
                 optional=True,
                 critical=False,
             ),
@@ -380,7 +395,7 @@ class WorkflowOrchestrator:
                 method_name="audit_project",
                 retry_count=1,
                 retry_delay=2.0,
-                timeout=600.0,
+                timeout=llm_timeout,
                 optional=True,
                 critical=False,
             ),
@@ -390,7 +405,7 @@ class WorkflowOrchestrator:
                 method_name="review_project",
                 retry_count=1,
                 retry_delay=2.0,
-                timeout=600.0,
+                timeout=llm_timeout,
                 optional=True,
                 critical=False,
             ),
@@ -400,7 +415,7 @@ class WorkflowOrchestrator:
                 method_name="commit_project",
                 retry_count=1,
                 retry_delay=2.0,
-                timeout=300.0,
+                timeout=llm_timeout,
                 optional=True,
                 critical=False,
             ),
