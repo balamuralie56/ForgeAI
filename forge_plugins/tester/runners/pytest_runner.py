@@ -63,7 +63,11 @@ class PytestRunner:
             exit_code = result.returncode
         except subprocess.TimeoutExpired as e:
             logger.error(f"Pytest run timed out after 60s: {e}")
-            err_data = e.stderr.decode("utf-8") if isinstance(e.stderr, bytes) else str(e.stderr)
+            err_data = (
+                e.stderr.decode("utf-8")
+                if isinstance(e.stderr, bytes)
+                else str(e.stderr)
+            )
             return {
                 "total": 0,
                 "passed": 0,
@@ -115,7 +119,7 @@ class PytestRunner:
 
         if summary_line_match:
             summary_text = summary_line_match.group(1)
-            
+
             passed_match = re.search(r"(\d+)\s+passed", summary_text)
             failed_match = re.search(r"(\d+)\s+failed", summary_text)
             errors_match = re.search(r"(\d+)\s+error", summary_text)

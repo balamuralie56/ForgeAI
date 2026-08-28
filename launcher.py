@@ -51,6 +51,9 @@ class ForgeAILauncher:
             if (self.kernel and self.kernel.task_engine)
             else "Not initialized"
         )
+        workflow_status = (
+            "✓ Ready" if (self.kernel and self.kernel.workflow) else "Not initialized"
+        )
         num_plugins = (
             len(self.kernel.plugin_manager.get_all_plugins())
             if self.kernel and self.kernel.plugin_manager
@@ -72,6 +75,7 @@ class ForgeAILauncher:
         print(f"{'Plugins...':<34} {num_plugins} Loaded")
         print(f"{'Kernel...':<34} {kernel_status}")
         print(f"{'Task Engine...':<34} {task_engine_status}")
+        print(f"{'Workflow Engine...':<34} {workflow_status}")
         if health_summary:
             print(f"{'System Health...':<34} {health_summary}")
         print("====================================================")
@@ -213,6 +217,7 @@ class ForgeAILauncher:
         print(" - EventBusService                -> ForgeAIEventBus")
         print(" - MemoryService                  -> ForgeAIMemoryService")
         print(" - TaskEngineService              -> ForgeAITaskEngine")
+        print(" - WorkflowService                -> ForgeAIWorkflowService")
 
         # 7. Registered Model Providers
         print(f"\nRegistered Model Providers:       {model_provider} (Active default)")

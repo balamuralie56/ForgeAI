@@ -19,6 +19,8 @@ logger = logging.getLogger("ForgeAI.Plugins.Tester.Writers")
 class TestWorkspaceWriter:
     """Handles atomic, transaction-like file writes for test suites with merging and rollback."""
 
+    __test__ = False
+
     def __init__(self, event_bus: EventBusService) -> None:
         """
         Initializes the test workspace writer.
@@ -146,31 +148,38 @@ class TestWorkspaceWriter:
         """
         Uses model router to merge newly generated tests with existing tests.
         """
-        current_dir = Path(__file__).parent.parent
-        merge_prompt_path = current_dir / "prompts" / "merge.txt"
+        try:
+            current_dir = Path(__file__).parent.parent
+            merge_prompt_path = current_dir / "prompts" / "merge.txt"
 
-        if not merge_prompt_path.exists():
-            raise TesterWriteError("Merge prompt template not found.")
+            if not merge_prompt_path.exists():
+                logger.warning("Merge prompt template not found. Overwriting instead.")
+                return new_code
 
-        prompt_template = merge_prompt_path.read_text(encoding="utf-8")
-        prompt = prompt_template.format(existing_code=existing_code, new_code=new_code)
+            prompt_template = merge_prompt_path.read_text(encoding="utf-8")
+            prompt = prompt_template.format(
+                existing_code=existing_code, new_code=new_code
+            )
 
-        response = model_router.generate(prompt)
-        merged_code = response.text.strip()
+            response = model_router.generate(prompt)
+            merged_code = response.text.strip()
 
-        # Clean markdown wraps from response
-        if merged_code.startswith("```"):
-            lines = merged_code.splitlines()
-            if len(lines) >= 2:
-                # Remove first line if it starts with ```
-                if lines[0].startswith("```"):
-                    lines = lines[1:]
-                # Remove last line if it is ```
-                if lines[-1].strip() == "```":
-                    lines = lines[:-1]
-                merged_code = "\n".join(lines).strip()
+            # Clean markdown wraps from response
+            if merged_code.startswith("```"):
+                lines = merged_code.splitlines()
+                if len(lines) >= 2:
+                    # Remove first line if it starts with ```
+                    if lines[0].startswith("```"):
+                        lines = lines[1:]
+                    # Remove last line if it is ```
+                    if lines[-1].strip() == "```":
+                        lines = lines[:-1]
+                    merged_code = "\n".join(lines).strip()
 
-        return merged_code
+            return merged_code
+        except Exception as e:
+            logger.warning(f"Error merging test files: {e}. Falling back to override.")
+            return new_code
 
     def _rollback(
         self, written_files: List[Path], original_contents: Dict[Path, Optional[str]]

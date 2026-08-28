@@ -85,9 +85,16 @@ def load_prompt_and_generate(
                 raise ValueError("Item entry must be a JSON dictionary.")
             path = item.get("path")
             content = item.get("content")
-            if not path or not content or not isinstance(path, str) or not isinstance(content, str):
-                raise ValueError("Each entry must define non-empty 'path' and 'content' strings.")
-            
+            if (
+                not path
+                or not content
+                or not isinstance(path, str)
+                or not isinstance(content, str)
+            ):
+                raise ValueError(
+                    "Each entry must define non-empty 'path' and 'content' strings."
+                )
+
             item_category = item.get("category") or category
             generated_docs.append(
                 GeneratedDocFile(

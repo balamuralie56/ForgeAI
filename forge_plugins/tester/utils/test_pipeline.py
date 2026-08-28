@@ -4,7 +4,7 @@ Pipeline infrastructure for the Tester Plugin execution context and step sequenc
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List
+from typing import List
 
 from forge_core.event_bus.models import Event
 from forge_core.event_bus.service import EventBusService
@@ -21,6 +21,8 @@ class TestContext:
     """
     State container passed between test pipeline compilation steps.
     """
+
+    __test__ = False
 
     def __init__(
         self,
@@ -53,6 +55,8 @@ class TestPipelineStep(ABC):
     Abstract interface for individual test code/spec generation steps.
     """
 
+    __test__ = False
+
     @property
     @abstractmethod
     def name(self) -> str:
@@ -74,6 +78,8 @@ class TestPipeline:
     """
     Executes a sequence of TestPipelineSteps, emitting progress events.
     """
+
+    __test__ = False
 
     def __init__(
         self, steps: List[TestPipelineStep], event_bus: EventBusService

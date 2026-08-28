@@ -5,7 +5,7 @@ Bootstraps Configuration, Logging, Service Registry, Lifecycles, Model Router, a
 
 import logging
 import time
-from typing import Optional
+from typing import Optional, Any
 
 from forge_core.configuration.config_manager import ConfigurationManager
 from forge_core.configuration.service import ConfigurationService
@@ -60,6 +60,7 @@ class ForgeAIKernel(Kernel):
         self.event_bus: Optional[ForgeAIEventBus] = None
         self.memory: Optional[ForgeAIMemoryService] = None
         self.task_engine: Optional[ForgeAITaskEngine] = None
+        self.workflow: Optional[Any] = None
         self._booted: bool = False
         self._boot_time_ms: int = 0
 
@@ -127,7 +128,17 @@ class ForgeAIKernel(Kernel):
             self._registry.register(TaskEngineService, self.task_engine)  # type: ignore[type-abstract]
             self._lifecycle_manager.register(self.task_engine)
 
-            # 8. Boot lifecycle components registered so far
+            # 8. Initialize Workflow Service
+            from forge_core.workflow.service import (
+                WorkflowService,
+                ForgeAIWorkflowService,
+            )
+
+            self.workflow = ForgeAIWorkflowService(self._registry)
+            self._registry.register(WorkflowService, self.workflow)  # type: ignore[type-abstract]
+            self._lifecycle_manager.register(self.workflow)
+
+            # 9. Boot lifecycle components registered so far
             self._lifecycle_manager.initialize_all()
 
             # 9. Load enabled plugins
@@ -190,6 +201,7 @@ class ForgeAIKernel(Kernel):
             "EventBus": "Ready" if self.event_bus else "Missing",
             "Memory": "Ready" if self.memory else "Missing",
             "TaskEngine": "Ready" if self.task_engine else "Missing",
+            "Workflow": "Ready" if self.workflow else "Missing",
         }
 
         all_ready = all(status == "Ready" for status in services.values())

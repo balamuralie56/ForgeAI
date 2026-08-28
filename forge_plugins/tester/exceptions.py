@@ -6,7 +6,7 @@ Exceptions for the ForgeAI Tester Plugin.
 class TesterError(Exception):
     """Base exception class for all Tester Plugin errors."""
 
-    pass
+    __test__ = False
 
 
 class TestingInferenceError(TesterError):
@@ -18,10 +18,10 @@ class TestingInferenceError(TesterError):
 class TestValidationError(TesterError):
     """Raised when specification or report validation checks fail."""
 
-    pass
+    __test__ = False
 
 
 class TesterWriteError(TesterError):
     """Raised when writing generated test files to workspace or rollback fails."""
 
-    pass
+    __test__ = False

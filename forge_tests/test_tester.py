@@ -28,9 +28,11 @@ from forge_plugins.tester.exceptions import (
     TestValidationError,
     TesterError,
     TesterWriteError,
+    TestingInferenceError,
 )
 from forge_plugins.tester.runners.pytest_runner import PytestRunner
 from forge_plugins.tester.runners.coverage_runner import CoverageRunner
+from forge_plugins.tester.utils.test_pipeline import TestContext
 
 
 class TestTesterPlugin(unittest.TestCase):
@@ -417,3 +419,346 @@ class TestTesterPlugin(unittest.TestCase):
         # 4. Workspace does not exist
         with self.assertRaises(TestValidationError):
             validator.validate(plan, spec, report, "nonexistent_workspace_path_123")
+
+    def test_pytest_runner_empty_tests_fallback(self) -> None:
+        """Verifies PytestRunner skips execution if tests folder is missing."""
+        runner = PytestRunner()
+        # Pass a nonexistent workspace directory to verify skipped execution
+        stats = runner.run_tests("nonexistent_workspace_path_123")
+        self.assertEqual(stats["total"], 0)
+        self.assertTrue(stats["success"])
+
+    def test_pytest_runner_unmatched_stdout(self) -> None:
+        """Verifies PytestRunner handles unmatched test stdout reports gracefully."""
+        runner = PytestRunner()
+        stats = runner._parse_output("no recognizable summary text here", exit_code=0)
+        self.assertEqual(stats["total"], 0)
+        self.assertTrue(stats["success"])
+
+    def test_coverage_runner_parsing_text_fallback(self) -> None:
+        """Verifies CoverageRunner falls back to standard coverage report stdout parsing when JSON is missing."""
+        runner = CoverageRunner()
+        (Path(self.temp_workspace.name) / "tests").mkdir(parents=True, exist_ok=True)
+
+        # Mock subprocess run to simulate standard coverage report printing totals
+        with patch("subprocess.run") as mock_run:
+            mock_process = MagicMock()
+            mock_process.stdout = "TOTAL      50     10    80%\n"
+            mock_run.return_value = mock_process
+
+            percent = runner.run_coverage(self.temp_workspace.name)
+            self.assertEqual(percent, 80.0)
+
+    def test_service_config_resolution_failure(self) -> None:
+        """Verifies TesterService raises TesterError when system settings config throws Exception."""
+        self.mock_config.get_system_settings.side_effect = Exception(
+            "System Config Error"
+        )
+        plan, spec, report = self._get_mock_plan_spec_and_report()
+        with self.assertRaises(TesterError):
+            self.tester.test_project(plan, spec, report)
+
+    def test_service_inference_error(self) -> None:
+        """Verifies TesterService logs and publishes events on step inference error."""
+        plan, spec, report = self._get_mock_plan_spec_and_report()
+        workspace_dir = Path(self.temp_workspace.name)
+        (workspace_dir / "src").mkdir(parents=True, exist_ok=True)
+        (workspace_dir / "src" / "main.py").write_text(
+            "print('hello')", encoding="utf-8"
+        )
+
+        # Mock Model Router to raise error to trigger inference failure
+        self.mock_router.generate.side_effect = Exception("Inference offline")
+
+        with self.assertRaises(TesterError):
+            self.tester.test_project(plan, spec, report)
+
+    def test_service_pytest_execution_error(self) -> None:
+        """Verifies TesterService raises TesterError if pytest execution reports failure."""
+        plan, spec, report = self._get_mock_plan_spec_and_report()
+        workspace_dir = Path(self.temp_workspace.name)
+        (workspace_dir / "src").mkdir(parents=True, exist_ok=True)
+        (workspace_dir / "src" / "main.py").write_text(
+            "print('hello')", encoding="utf-8"
+        )
+
+        self.tester.pytest_runner = MagicMock()
+        self.tester.pytest_runner.run_tests.return_value = {
+            "total": 5,
+            "passed": 2,
+            "failed": 3,
+            "errors": 0,
+            "skipped": 0,
+            "success": False,
+            "output": "Failed",
+        }
+
+        mock_responses = [
+            ModelResponse(text='{"files": []}', raw_response={}, model_name="mock")
+            for _ in range(7)
+        ]
+        self.mock_router.generate.side_effect = mock_responses
+
+        with self.assertRaises(TesterError):
+            self.tester.test_project(plan, spec, report)
+
+    def test_prompt_helper_file_not_found(self) -> None:
+        """Verifies load_prompt_and_generate throws TestingInferenceError on missing templates."""
+        from forge_plugins.tester.utils.prompt_helper import load_prompt_and_generate
+
+        plan, spec, report = self._get_mock_plan_spec_and_report()
+        context = TestContext(
+            project_plan=plan,
+            architecture=spec,
+            implementation_report=report,
+            workspace=self.temp_workspace.name,
+            model_router=self.mock_router,
+            event_bus=self.mock_event_bus,
+            configuration=self.mock_config.get_full_config(),
+            memory=self.memory,
+            logger=MagicMock(),
+        )
+
+        with self.assertRaises(TestingInferenceError):
+            load_prompt_and_generate(
+                context, "non_existent_prompt_template_file", "unit"
+            )
+
+    def test_prompt_helper_json_decode_failure(self) -> None:
+        """Verifies load_prompt_and_generate throws TestingInferenceError on malformed JSON response."""
+        from forge_plugins.tester.utils.prompt_helper import load_prompt_and_generate
+
+        plan, spec, report = self._get_mock_plan_spec_and_report()
+        context = TestContext(
+            project_plan=plan,
+            architecture=spec,
+            implementation_report=report,
+            workspace=self.temp_workspace.name,
+            model_router=self.mock_router,
+            event_bus=self.mock_event_bus,
+            configuration=self.mock_config.get_full_config(),
+            memory=self.memory,
+            logger=MagicMock(),
+        )
+
+        # Mock invalid JSON response format
+        self.mock_router.generate.return_value = ModelResponse(
+            text="Invalid JSON non-structured payload string",
+            raw_response={},
+            model_name="mock",
+        )
+
+        with self.assertRaises(TestingInferenceError):
+            load_prompt_and_generate(context, "unit", "unit")
+
+    def test_workspace_writer_merge_exception_fallback(self) -> None:
+        """Verifies TestWorkspaceWriter falls back to direct override if merge generation raises error."""
+        writer = self.tester.writer
+        existing = "def test_one(): assert True"
+        new = "def test_two(): assert True"
+
+        # Mock ModelRouter to raise an error during merge
+        self.mock_router.generate.side_effect = Exception("Model service busy")
+
+        # Should fallback to returning the new code content without crash
+        merged = writer._merge_test_files(existing, new, self.mock_router)
+        self.assertEqual(merged, new)
+
+    def test_workspace_writer_rollback_restores_backup(self) -> None:
+        """Verifies TestWorkspaceWriter restores original files from backup if write error occurs mid-run."""
+        writer = self.tester.writer
+        workspace_dir = Path(self.temp_workspace.name)
+        (workspace_dir / "tests").mkdir(parents=True, exist_ok=True)
+
+        # Pre-populate an existing file
+        existing_file = workspace_dir / "tests" / "test_existing.py"
+        existing_file.write_text("# Original content", encoding="utf-8")
+
+        # Define file writes where the second file write fails
+        files = [
+            GeneratedTestFile(
+                path="tests/test_existing.py",
+                content="# Updated content",
+                test_type="unit",
+            ),
+            GeneratedTestFile(
+                path="tests/test_fail.py", content="content", test_type="unit"
+            ),
+        ]
+
+        # Patch Path.write_text to raise an exception ONLY when writing the second file
+        original_write_text = Path.write_text
+
+        def side_effect_write(self_path, *args, **kwargs):
+            if "test_fail.py" in str(self_path):
+                raise IOError("Write failed")
+            return original_write_text(self_path, *args, **kwargs)
+
+        with patch.object(Path, "write_text", side_effect=side_effect_write):
+            with self.assertRaises(TesterWriteError):
+                writer.write_files(
+                    self.temp_workspace.name,
+                    files,
+                    "test-proj",
+                    model_router=self.mock_router,
+                )
+
+            # Assert existing file is restored back to its original backup contents
+            self.assertEqual(
+                existing_file.read_text(encoding="utf-8"), "# Original content"
+            )
+            # Assert failing file does not exist
+            self.assertFalse((workspace_dir / "tests" / "test_fail.py").exists())
+
+    def test_pytest_runner_no_tests_collected(self) -> None:
+        """Verifies PytestRunner parses collected 0 items as success."""
+        runner = PytestRunner()
+        stats = runner._parse_output("collected 0 items", exit_code=0)
+        self.assertEqual(stats["total"], 0)
+        self.assertTrue(stats["success"])
+
+    def test_pytest_runner_successful_execution(self) -> None:
+        """Verifies PytestRunner successfully executes pytest subprocess and returns success state."""
+        runner = PytestRunner()
+        (Path(self.temp_workspace.name) / "tests").mkdir(parents=True, exist_ok=True)
+        with patch("subprocess.run") as mock_run:
+            mock_process = MagicMock()
+            mock_process.stdout = "=== 5 passed in 0.15s ==="
+            mock_process.stderr = ""
+            mock_process.return_code = 0
+            mock_run.return_value = mock_process
+            stats = runner.run_tests(self.temp_workspace.name)
+            self.assertEqual(stats["total"], 5)
+            self.assertEqual(stats["passed"], 5)
+
+    def test_service_unexpected_step_failure(self) -> None:
+        """Verifies TesterService raises TesterError when pipeline step throws unexpected Exception."""
+        plan, spec, report = self._get_mock_plan_spec_and_report()
+        workspace_dir = Path(self.temp_workspace.name)
+        (workspace_dir / "src").mkdir(parents=True, exist_ok=True)
+        (workspace_dir / "src" / "main.py").write_text(
+            "print('hello')", encoding="utf-8"
+        )
+
+        # Mock ModelRouter to raise arbitrary exception during step execution
+        self.mock_router.generate.side_effect = ValueError("Corrupt config text")
+        with self.assertRaises(TesterError):
+            self.tester.test_project(plan, spec, report)
+
+    def test_service_write_generic_exception(self) -> None:
+        """Verifies TesterService maps generic workspace writing exception to TesterError."""
+        plan, spec, report = self._get_mock_plan_spec_and_report()
+        workspace_dir = Path(self.temp_workspace.name)
+        (workspace_dir / "src").mkdir(parents=True, exist_ok=True)
+        (workspace_dir / "src" / "main.py").write_text(
+            "print('hello')", encoding="utf-8"
+        )
+
+        mock_responses = [
+            ModelResponse(text='{"files": []}', raw_response={}, model_name="mock")
+            for _ in range(7)
+        ]
+        self.mock_router.generate.side_effect = mock_responses
+
+        # Patch write_files to raise generic exception
+        with patch.object(
+            self.tester.writer, "write_files", side_effect=RuntimeError("Disk crash")
+        ):
+            with self.assertRaises(TesterError):
+                self.tester.test_project(plan, spec, report)
+
+    def test_service_memory_storage_exception(self) -> None:
+        """Verifies TesterService continues successfully even if memory persistence raises Exception."""
+        plan, spec, report = self._get_mock_plan_spec_and_report()
+        workspace_dir = Path(self.temp_workspace.name)
+        (workspace_dir / "src").mkdir(parents=True, exist_ok=True)
+        (workspace_dir / "src" / "main.py").write_text(
+            "print('hello')", encoding="utf-8"
+        )
+
+        # Mock Pytest and Coverage success
+        self.tester.pytest_runner = MagicMock()
+        self.tester.pytest_runner.run_tests.return_value = {
+            "total": 5,
+            "passed": 5,
+            "failed": 0,
+            "errors": 0,
+            "skipped": 0,
+            "success": True,
+            "output": "Pass",
+        }
+        self.tester.coverage_runner = MagicMock()
+        self.tester.coverage_runner.run_coverage.return_value = 95.0
+
+        mock_responses = [
+            ModelResponse(text='{"files": []}', raw_response={}, model_name="mock")
+            for _ in range(7)
+        ]
+        self.mock_router.generate.side_effect = mock_responses
+
+        # Mock memory to raise exception
+        with patch.object(
+            self.memory.runtime,
+            "set_project_state",
+            side_effect=Exception("Database locked"),
+        ):
+            # Should complete successfully because it catches memory write exceptions internally
+            test_report = self.tester.test_project(plan, spec, report)
+            self.assertEqual(test_report.status, "SUCCESS")
+
+    def test_workspace_writer_existing_file_read_failure(self) -> None:
+        """Verifies TestWorkspaceWriter handles existing file read errors safely during writes."""
+        writer = self.tester.writer
+        workspace_dir = Path(self.temp_workspace.name)
+        (workspace_dir / "tests").mkdir(parents=True, exist_ok=True)
+        existing_file = workspace_dir / "tests" / "test_unreadable.py"
+        existing_file.write_text("# content", encoding="utf-8")
+
+        files = [
+            GeneratedTestFile(
+                path="tests/test_unreadable.py",
+                content="# new content",
+                test_type="unit",
+            )
+        ]
+
+        # Patch Path.read_text to raise an exception, verifying backup state continues safely
+        with patch.object(Path, "read_text", side_effect=IOError("Permission denied")):
+            writer.write_files(
+                self.temp_workspace.name,
+                files,
+                "test-proj",
+                model_router=self.mock_router,
+            )
+        # Content should still be overwritten successfully
+        self.assertEqual(existing_file.read_text(encoding="utf-8"), "# new content")
+
+    def test_workspace_writer_rollback_exception_handling(self) -> None:
+        """Verifies TestWorkspaceWriter logs but does not crash if a rollback deletes a file that throws Exception."""
+        writer = self.tester.writer
+        workspace_dir = Path(self.temp_workspace.name)
+        (workspace_dir / "tests").mkdir(parents=True, exist_ok=True)
+
+        # We write a file successfully, but make subsequent rollback throw an exception on unlink
+
+        # Patch Path.write_text to trigger rollback, and patch Path.unlink to throw exception
+        with patch.object(Path, "write_text", side_effect=[None, IOError("Disk Full")]):
+            with patch.object(Path, "unlink", side_effect=IOError("File locked")):
+                with self.assertRaises(TesterWriteError):
+                    # We pass two files (first succeeds, second triggers rollback where unlink fails)
+                    writer.write_files(
+                        self.temp_workspace.name,
+                        [
+                            GeneratedTestFile(
+                                path="tests/test_rollback_err.py",
+                                content="# 1",
+                                test_type="unit",
+                            ),
+                            GeneratedTestFile(
+                                path="tests/test_rollback_err2.py",
+                                content="# 2",
+                                test_type="unit",
+                            ),
+                        ],
+                        "test-proj",
+                    )
