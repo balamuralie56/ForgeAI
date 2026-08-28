@@ -64,3 +64,4 @@ class ForgeConfig:
     plugins: PluginSettings = field(default_factory=PluginSettings)
     git: Dict[str, Any] = field(default_factory=dict)
     security: Dict[str, Any] = field(default_factory=dict)
+    reviewer: Dict[str, Any] = field(default_factory=dict)

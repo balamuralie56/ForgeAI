@@ -16,7 +16,7 @@
     },
     "plugins": {
         "plugin_dir": "forge_plugins",
-        "enabled_plugins": ["planner", "architect", "developer", "tester", "documentation", "git", "security"]
+        "enabled_plugins": ["planner", "architect", "developer", "tester", "documentation", "git", "security", "reviewer"]
     },
     "git": {
         "auto_branch": true,
@@ -50,6 +50,24 @@
             "SEC-006-HARDCODED": true,
             "SEC-007-SQL": true,
             "SEC-008-TEMPFILE": true
+        }
+    },
+    "reviewer": {
+        "enabled": true,
+        "llm_review": true,
+        "block_release": false,
+        "min_quality_score": 50.0,
+        "rules": {
+            "REV-001-LONGFUNC": true,
+            "REV-002-TOOMANYPARAMS": true,
+            "REV-003-GODCLASS": true,
+            "REV-004-DEEPNESTING": true,
+            "REV-005-MAGICNUMBER": true,
+            "REV-006-NODOCSTRING": true,
+            "REV-007-MUTABLEDEFAULT": true,
+            "REV-008-TYPECHECKCHAIN": true,
+            "REV-009-FATINTERFACE": true,
+            "REV-010-CONCRETEDEP": true
         }
     }
 }

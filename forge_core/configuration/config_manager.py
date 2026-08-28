@@ -72,6 +72,7 @@ class ConfigurationManager(ConfigurationService):
                 plugins=plugins_cfg,
                 git=env_overridden_data.get("git", {}),
                 security=env_overridden_data.get("security", {}),
+                reviewer=env_overridden_data.get("reviewer", {}),
             )
         except TypeError as e:
             raise ConfigurationValidationError(f"Schema mismatch: {e}") from e

@@ -70,8 +70,8 @@ This document serves as the project's north star, outlining the historical miles
 
 ### [v0.9.5] — Platform Assurance
 - **Focus**: Security & Reviewer Plugins.
-- **Status**: In Progress — Security Plugin completed; Reviewer Plugin not started.
-- **Deliverables**: Secret scanning, AST-based vulnerability checks (eval/exec/shell/pickle/weak-crypto/SQL injection/temp files), dependency CVE checks, copyleft license scanning, SARIF export, and release-blocking quality gates — all shipped and tested (`forge_plugins/security/`, 238 tests). Code smell reviews and SOLID compliance scoring (the Reviewer Plugin) remain unbuilt.
+- **Status**: Completed.
+- **Deliverables**: Secret scanning, AST-based vulnerability checks (eval/exec/shell/pickle/weak-crypto/SQL injection/temp files), dependency CVE checks, copyleft license scanning, SARIF export, and release-blocking quality gates (`forge_plugins/security/`). Code smell detection (long functions, deep nesting, magic numbers, missing docstrings, mutable defaults) and SOLID compliance scoring — S/O/I/D computed from AST proxies, L reported as not-evaluated since it needs cross-class contract analysis this tool's per-node rule interface can't do (`forge_plugins/reviewer/`). 278 tests total, both plugins dogfooded against ForgeAI's own source.
 
 ### [v1.0.0] — ForgeAI Release
 - **Focus**: Production Release.

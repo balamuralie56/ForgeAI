@@ -32,6 +32,7 @@ from forge_plugins.tester.service import TesterService
 from forge_plugins.documentation.service import DocumentationService
 from forge_plugins.git.service import GitService
 from forge_plugins.security.service import SecurityService
+from forge_plugins.reviewer.service import ReviewerService
 
 
 class TestWorkflowOrchestrator(unittest.TestCase):
@@ -74,6 +75,7 @@ class TestWorkflowOrchestrator(unittest.TestCase):
         self.mock_documentation = MagicMock(spec=DocumentationService)
         self.mock_git = MagicMock(spec=GitService)
         self.mock_security = MagicMock(spec=SecurityService)
+        self.mock_reviewer = MagicMock(spec=ReviewerService)
 
         self.registry.register(PlannerService, self.mock_planner)
         self.registry.register(ArchitectService, self.mock_architect)
@@ -82,6 +84,7 @@ class TestWorkflowOrchestrator(unittest.TestCase):
         self.registry.register(DocumentationService, self.mock_documentation)
         self.registry.register(GitService, self.mock_git)
         self.registry.register(SecurityService, self.mock_security)
+        self.registry.register(ReviewerService, self.mock_reviewer)
 
     def tearDown(self) -> None:
         self.workflow_service.shutdown()
@@ -115,6 +118,7 @@ class TestWorkflowOrchestrator(unittest.TestCase):
         mock_test_report = MagicMock()
         mock_doc_report = MagicMock()
         mock_security_report = MagicMock()
+        mock_review_report = MagicMock()
         mock_git_report = MagicMock()
 
         self.mock_planner.plan_project.return_value = mock_plan
@@ -123,6 +127,7 @@ class TestWorkflowOrchestrator(unittest.TestCase):
         self.mock_tester.test_project.return_value = mock_test_report
         self.mock_documentation.document_project.return_value = mock_doc_report
         self.mock_security.audit_project.return_value = mock_security_report
+        self.mock_reviewer.review_project.return_value = mock_review_report
         self.mock_git.commit_project.return_value = mock_git_report
 
         workflow = self.workflow_service.create_workflow(
@@ -152,6 +157,9 @@ class TestWorkflowOrchestrator(unittest.TestCase):
         self.mock_security.audit_project.assert_called_once_with(
             mock_plan, mock_spec, mock_dev_report, mock_test_report, mock_doc_report
         )
+        self.mock_reviewer.review_project.assert_called_once_with(
+            mock_plan, mock_spec, mock_dev_report, mock_test_report, mock_doc_report
+        )
         self.mock_git.commit_project.assert_called_once_with(
             mock_plan,
             mock_spec,
@@ -163,7 +171,7 @@ class TestWorkflowOrchestrator(unittest.TestCase):
 
         self.assertEqual(report["status"], "COMPLETED")
         self.assertEqual(report["progress"], 100.0)
-        self.assertEqual(len(report["stages"]), 7)
+        self.assertEqual(len(report["stages"]), 8)
         self.assertTrue(Path(self.temp_dir.name, "workflow_report.json").exists())
         self.assertTrue(Path(self.temp_dir.name, "workflow_summary.md").exists())
 

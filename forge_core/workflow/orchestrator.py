@@ -140,6 +140,8 @@ class WorkflowOrchestrator:
                         workflow.context["documentation_report"] = result
                     elif stage.name == "security":
                         workflow.context["security_report"] = result
+                    elif stage.name == "reviewer":
+                        workflow.context["review_report"] = result
                     elif stage.name == "git":
                         workflow.context["git_report"] = result
                     else:
@@ -282,6 +284,13 @@ class WorkflowOrchestrator:
                 test_report = workflow.context.get("test_report")
                 doc_report = workflow.context.get("documentation_report")
                 return method(plan, spec, report, test_report, doc_report)
+            elif stage.name == "reviewer":
+                plan = workflow.context.get("project_plan")
+                spec = workflow.context.get("architecture_specification")
+                report = workflow.context.get("implementation_report")
+                test_report = workflow.context.get("test_report")
+                doc_report = workflow.context.get("documentation_report")
+                return method(plan, spec, report, test_report, doc_report)
             elif stage.name == "git":
                 plan = workflow.context.get("project_plan")
                 spec = workflow.context.get("architecture_specification")
@@ -311,6 +320,7 @@ class WorkflowOrchestrator:
         from forge_plugins.tester.service import TesterService
         from forge_plugins.documentation.service import DocumentationService
         from forge_plugins.security.service import SecurityService
+        from forge_plugins.reviewer.service import ReviewerService
         from forge_plugins.git.service import GitService
 
         stages_dict = {
@@ -374,6 +384,16 @@ class WorkflowOrchestrator:
                 optional=True,
                 critical=False,
             ),
+            "reviewer": WorkflowStage(
+                name="reviewer",
+                service_interface=ReviewerService,
+                method_name="review_project",
+                retry_count=1,
+                retry_delay=2.0,
+                timeout=180.0,
+                optional=True,
+                critical=False,
+            ),
             "git": WorkflowStage(
                 name="git",
                 service_interface=GitService,
@@ -394,6 +414,7 @@ class WorkflowOrchestrator:
                 stages_dict["tester"],
                 stages_dict["documentation"],
                 stages_dict["security"],
+                stages_dict["reviewer"],
                 stages_dict["git"],
             ]
         elif workflow_type == WorkflowType.DOCUMENTATION_ONLY:
@@ -498,6 +519,19 @@ class WorkflowOrchestrator:
                     reconstructed["security_report"]
                 )
 
+        # 6b. ReviewReport
+        if "review_report" in reconstructed and isinstance(
+            reconstructed["review_report"], dict
+        ):
+            if reconstructed["review_report"].get("__mock__"):
+                reconstructed["review_report"] = MagicMock()
+            else:
+                from forge_plugins.reviewer.models import ReviewReport
+
+                reconstructed["review_report"] = ReviewReport.from_dict(
+                    reconstructed["review_report"]
+                )
+
         # 7. GitReport
         if "git_report" in reconstructed and isinstance(
             reconstructed["git_report"], dict
@@ -522,6 +556,7 @@ def get_interface_map() -> Dict[str, Type[Any]]:
     from forge_plugins.tester.service import TesterService
     from forge_plugins.documentation.service import DocumentationService
     from forge_plugins.security.service import SecurityService
+    from forge_plugins.reviewer.service import ReviewerService
     from forge_plugins.git.service import GitService
 
     return {
@@ -531,5 +566,6 @@ def get_interface_map() -> Dict[str, Type[Any]]:
         "TesterService": TesterService,
         "DocumentationService": DocumentationService,
         "SecurityService": SecurityService,
+        "ReviewerService": ReviewerService,
         "GitService": GitService,
     }

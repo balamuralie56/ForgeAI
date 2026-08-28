@@ -16,7 +16,7 @@ class TestHealthAndDiagnostics(unittest.TestCase):
     def test_central_version_constants(self) -> None:
         """Asserts that version.py contains title, version, author, and repository fields."""
         self.assertEqual(version.__title__, "ForgeAI")
-        self.assertEqual(version.__version__, "0.9.0")
+        self.assertEqual(version.__version__, "0.9.5")
         self.assertIsNotNone(version.__author__)
         self.assertIsNotNone(version.__repository__)
 
