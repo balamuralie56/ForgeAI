@@ -55,7 +55,7 @@ def load_prompt_and_generate(
     prompt = prompt_template.format(plan=plan_json, spec=spec_json)
 
     try:
-        response = context.model_router.generate(prompt)
+        response = context.model_router.generate(prompt, response_format="json")
         raw_text = response.text
     except Exception as e:
         raise DeveloperInferenceError(f"Model Router generation failed: {e}") from e

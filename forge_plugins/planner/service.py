@@ -236,7 +236,7 @@ The JSON must adhere to the following schema:
 
         # 2. Call LLM Router for centralized plan synthesis
         try:
-            response = self._model_router.generate(prompt)
+            response = self._model_router.generate(prompt, response_format="json")
             raw_text = response.text
         except Exception as e:
             raise PlanningInferenceError(f"Model Router generation failed: {e}") from e

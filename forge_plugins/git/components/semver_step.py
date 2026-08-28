@@ -142,7 +142,7 @@ class SemverStep(GitPipelineStep):
         )
 
         try:
-            response = context.model_router.generate(prompt)
+            response = context.model_router.generate(prompt, response_format="json")
             data = parse_json_response(response.text)
             bump_type = str(data.get("bump_type", "PATCH")).upper()
             if bump_type not in _BUMP_PRIORITIES:

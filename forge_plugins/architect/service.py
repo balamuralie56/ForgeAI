@@ -163,7 +163,7 @@ The JSON must adhere to the following schema:
 
         # 3. Request architectural specs from Model Router
         try:
-            response = self._model_router.generate(prompt)
+            response = self._model_router.generate(prompt, response_format="json")
             raw_text = response.text
         except Exception as e:
             raise ArchitectureInferenceError(

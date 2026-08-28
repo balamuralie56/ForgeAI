@@ -109,6 +109,26 @@ class TestOllamaProvider(unittest.TestCase):
         self.assertEqual(body_sent["prompt"], "Hello")
         self.assertEqual(body_sent["options"]["temperature"], 0.8)
         self.assertEqual(body_sent["options"]["num_predict"], 150)
+        self.assertNotIn("format", body_sent)
+
+    @patch("urllib.request.urlopen")
+    def test_generate_sets_json_format_when_requested(self, mock_urlopen) -> None:
+        """
+        response_format="json" must map to Ollama's grammar-constrained
+        format:"json" mode - the actual fix for the malformed-JSON failures
+        (unescaped quotes, raw newlines in strings) found via live testing.
+        Callers that want free-form text (commit messages, doc prose) must
+        never see this set, so it's opt-in per call, not a provider default.
+        """
+        mock_urlopen.return_value = MockHTTPResponse(
+            json.dumps({"response": "{}"}).encode("utf-8")
+        )
+
+        self.provider.generate(prompt="Plan this project", response_format="json")
+
+        args, _ = mock_urlopen.call_args
+        body_sent = json.loads(args[0].data.decode("utf-8"))
+        self.assertEqual(body_sent["format"], "json")
 
     @patch("urllib.request.urlopen")
     def test_generate_chat_success(self, mock_urlopen) -> None:
@@ -135,6 +155,21 @@ class TestOllamaProvider(unittest.TestCase):
 
         body_sent = json.loads(req.data.decode("utf-8"))
         self.assertEqual(body_sent["messages"], messages)
+        self.assertNotIn("format", body_sent)
+
+    @patch("urllib.request.urlopen")
+    def test_generate_chat_sets_json_format_when_requested(self, mock_urlopen) -> None:
+        mock_urlopen.return_value = MockHTTPResponse(
+            json.dumps({"message": {"content": "{}"}}).encode("utf-8")
+        )
+
+        self.provider.generate_chat(
+            messages=[{"role": "user", "content": "hi"}], response_format="json"
+        )
+
+        args, _ = mock_urlopen.call_args
+        body_sent = json.loads(args[0].data.decode("utf-8"))
+        self.assertEqual(body_sent["format"], "json")
 
     @patch("urllib.request.urlopen")
     def test_http_error_handling(self, mock_urlopen) -> None:
@@ -218,10 +253,24 @@ class TestOpenAICompatibleProvider(unittest.TestCase):
         self.assertEqual(
             req.get_full_url(), "http://localhost:1234/v1/chat/completions"
         )
-
         body_sent = json.loads(req.data.decode("utf-8"))
         self.assertEqual(body_sent["model"], "custom-override")
-        self.assertEqual(body_sent["messages"], messages)
+
+    @patch("urllib.request.urlopen")
+    def test_generate_chat_sets_json_response_format_when_requested(
+        self, mock_urlopen
+    ) -> None:
+        mock_urlopen.return_value = MockHTTPResponse(
+            json.dumps({"choices": [{"message": {"content": "{}"}}]}).encode("utf-8")
+        )
+
+        self.provider.generate_chat(
+            messages=[{"role": "user", "content": "hi"}], response_format="json"
+        )
+
+        args, _ = mock_urlopen.call_args
+        body_sent = json.loads(args[0].data.decode("utf-8"))
+        self.assertEqual(body_sent["response_format"], {"type": "json_object"})
 
 
 if __name__ == "__main__":

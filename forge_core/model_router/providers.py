@@ -109,13 +109,22 @@ class OllamaProvider(BaseHTTPProvider):
         if "options" in kwargs:
             options.update(kwargs["options"])
 
-        payload = {
+        payload: Dict[str, Any] = {
             "model": target_model,
             "prompt": prompt,
             "stream": False,
         }
         if options:
             payload["options"] = options
+        if kwargs.get("response_format") == "json":
+            # Grammar-constrained decoding: Ollama guarantees syntactically
+            # valid JSON output, eliminating the malformed-JSON failure modes
+            # (unescaped quotes, raw newlines in strings, prose wrapping the
+            # object) that post-hoc parsing can only ever partially recover
+            # from. Only set when the caller actually expects JSON back -
+            # forcing this on free-form generations (commit messages, doc
+            # prose, review notes) would make the model produce garbage.
+            payload["format"] = "json"
 
         raw_response = self._post_request("/api/generate", payload)
 
@@ -148,13 +157,15 @@ class OllamaProvider(BaseHTTPProvider):
         if "options" in kwargs:
             options.update(kwargs["options"])
 
-        payload = {
+        payload: Dict[str, Any] = {
             "model": target_model,
             "messages": messages,
             "stream": False,
         }
         if options:
             payload["options"] = options
+        if kwargs.get("response_format") == "json":
+            payload["format"] = "json"
 
         raw_response = self._post_request("/api/chat", payload)
 
@@ -191,7 +202,7 @@ class OpenAICompatibleProvider(BaseHTTPProvider):
         self, prompt: str, model: Optional[str] = None, **kwargs: Any
     ) -> ModelResponse:
         target_model = model or self.default_model
-        payload = {
+        payload: Dict[str, Any] = {
             "model": target_model,
             "prompt": prompt,
             "stream": False,
@@ -228,7 +239,7 @@ class OpenAICompatibleProvider(BaseHTTPProvider):
         self, messages: List[Dict[str, str]], model: Optional[str] = None, **kwargs: Any
     ) -> ModelResponse:
         target_model = model or self.default_model
-        payload = {
+        payload: Dict[str, Any] = {
             "model": target_model,
             "messages": messages,
             "stream": False,
@@ -243,6 +254,11 @@ class OpenAICompatibleProvider(BaseHTTPProvider):
         ]:
             if param in kwargs:
                 payload[param] = kwargs[param]
+        if kwargs.get("response_format") == "json":
+            # OpenAI-compatible chat completions accept this exact shape.
+            # Only /chat/completions supports it, not the legacy /completions
+            # endpoint used by generate() above.
+            payload["response_format"] = {"type": "json_object"}
 
         raw_response = self._post_request("/chat/completions", payload)
 

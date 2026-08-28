@@ -63,7 +63,7 @@ def load_prompt_and_generate(
     )
 
     try:
-        response = context.model_router.generate(prompt)
+        response = context.model_router.generate(prompt, response_format="json")
         raw_text = response.text
     except Exception as e:
         raise DocInferenceError(f"Model Router generation failed: {e}") from e
