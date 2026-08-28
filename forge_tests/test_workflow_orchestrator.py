@@ -323,6 +323,42 @@ class TestWorkflowOrchestrator(unittest.TestCase):
         with self.assertRaises(WorkflowExecutionError):
             self.workflow_service.run_workflow(workflow_timeout)
 
+    def test_running_status_persisted_before_blocking_call(self) -> None:
+        """
+        A client polling GET /workflows/{id} mid-stage must see RUNNING, not
+        PENDING, for the whole duration of a long-running (e.g. real LLM)
+        call. Regression test: status used to only get saved at a stage's
+        start/end boundaries, so an in-flight stage was invisible until it
+        finished - found via a live run against a real local model where the
+        UI appeared to make no progress for several minutes.
+        """
+        observed_status = {}
+
+        def check_persisted_state_mid_call(*args, **kwargs):
+            reloaded = self.workflow_service.load_workflow(workflow.id)
+            observed_status["status"] = (
+                reloaded.stages[0].status.value if reloaded else None
+            )
+            return MagicMock()
+
+        self.mock_planner.plan_project.side_effect = check_persisted_state_mid_call
+
+        stage = WorkflowStage(
+            name="planner",
+            service_interface=PlannerService,
+            method_name="plan_project",
+        )
+        workflow = self.workflow_service.create_workflow(
+            WorkflowType.CUSTOM,
+            "Observability Check",
+            "Verify mid-stage status",
+            custom_stages=[stage],
+        )
+
+        self.workflow_service.run_workflow(workflow)
+
+        self.assertEqual(observed_status["status"], "RUNNING")
+
     def test_create_workflow_validation_checks(self) -> None:
         """Verifies create_workflow validates input configuration properly."""
         with self.assertRaises(WorkflowValidationError):

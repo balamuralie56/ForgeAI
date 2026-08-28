@@ -126,6 +126,15 @@ class WorkflowOrchestrator:
 
                 action = self._bind_stage_action(workflow, stage)
 
+                # Persist the RUNNING sub-state before the (possibly long)
+                # blocking call, not just at the stage's start/end boundaries.
+                # Without this, a client polling GET /workflows/{id} mid-stage
+                # sees the stage still sitting at PENDING for the entire
+                # duration - correct status, but no live "in progress" signal.
+                stage.status = WorkflowState.RUNNING
+                stage.started_at = time.time()
+                self._save_workflow(workflow)
+
                 try:
                     result = self._scheduler.execute_stage(workflow, stage, action)
 
