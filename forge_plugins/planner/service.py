@@ -53,33 +53,50 @@ class PlannerService(ABC):
 def parse_json_response(text: str) -> Dict[str, Any]:
     """
     Robust JSON parser handling potential markdown and formatting junk in LLM outputs.
-    """
-    cleaned = text.strip()
 
-    # Try parsing directly first in case it is already valid JSON (e.g., containing nested markdown code blocks)
+    Uses strict=False throughout: general-purpose (non-JSON-mode) local models
+    routinely emit literal newlines inside string values - e.g. a
+    "directory_structure" field formatted as a human-readable tree - instead of
+    escaping them as \\n. Strict JSON parsing rejects raw control characters in
+    strings; strict=False allows them, which is exactly what real local-model
+    output needs.
+    """
+    original = text.strip()
+
+    # Attempt 1: parse the whole response directly.
     try:
-        return json.loads(cleaned)
+        return json.loads(original, strict=False)
     except json.JSONDecodeError:
         pass
 
-    # Strip markdown block quotes (e.g. ```json ... ```)
-    match = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", cleaned)
-    if match:
-        cleaned = match.group(1).strip()
-    try:
-        return json.loads(cleaned)
-    except json.JSONDecodeError as e:
-        # Try to find the first '{' and last '}'
-        start = cleaned.find("{")
-        end = cleaned.rfind("}")
-        if start != -1 and end != -1:
-            try:
-                return json.loads(cleaned[start : end + 1])
-            except json.JSONDecodeError:
-                pass
-        raise PlanningInferenceError(
-            f"Failed to parse LLM response as JSON: {e}. Raw text: {text}"
-        )
+    # Attempt 2: strip an OUTER markdown fence (```json ... ``` wrapping the
+    # entire response). Anchored to start/end so a fence nested inside a JSON
+    # string value elsewhere in the response - as in the directory_structure
+    # case above - can't be mistaken for the outer wrapper.
+    fence_match = re.match(
+        r"^```(?:json)?\s*([\s\S]*?)\s*```$", original, flags=re.IGNORECASE
+    )
+    if fence_match:
+        try:
+            return json.loads(fence_match.group(1).strip(), strict=False)
+        except json.JSONDecodeError:
+            pass
+
+    # Attempt 3: fall back to the outermost '{' ... '}' span in the ORIGINAL
+    # text (never a fence-stripped/corrupted copy of it).
+    start = original.find("{")
+    end = original.rfind("}")
+    if start != -1 and end != -1:
+        try:
+            return json.loads(original[start : end + 1], strict=False)
+        except json.JSONDecodeError as e:
+            raise PlanningInferenceError(
+                f"Failed to parse LLM response as JSON: {e}. Raw text: {text}"
+            ) from e
+
+    raise PlanningInferenceError(
+        f"Failed to parse LLM response as JSON: no '{{' ... '}}' object found. Raw text: {text}"
+    )
 
 
 def execute_placeholder_task(task_id: str) -> Dict[str, Any]:

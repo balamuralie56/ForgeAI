@@ -14,7 +14,7 @@ from forge_core.memory.service import MemoryService, ForgeAIMemoryService
 from forge_core.task_engine.service import TaskEngineService
 from forge_core.task_engine.task_engine import ForgeAITaskEngine
 
-from forge_plugins.planner.service import ForgeAIPlanner
+from forge_plugins.planner.service import ForgeAIPlanner, parse_json_response
 from forge_plugins.planner.exceptions import PlanningInferenceError
 
 
@@ -140,6 +140,67 @@ class TestPlannerPlugin(unittest.TestCase):
 
         with self.assertRaises(PlanningInferenceError):
             self.planner.plan_project("Build a test app")
+
+
+class TestParseJsonResponse(unittest.TestCase):
+    """
+    Direct tests for parse_json_response - previously had zero coverage of its
+    own, which is exactly how the bugs below survived: mocked model responses
+    in the service-level tests are always clean, valid JSON and never exercise
+    the messy-real-LLM-output paths.
+    """
+
+    def test_clean_json(self) -> None:
+        result = parse_json_response('{"a": 1, "b": "two"}')
+        self.assertEqual(result, {"a": 1, "b": "two"})
+
+    def test_json_wrapped_in_outer_markdown_fence(self) -> None:
+        text = '```json\n{"a": 1}\n```'
+        self.assertEqual(parse_json_response(text), {"a": 1})
+
+    def test_json_with_raw_newline_inside_string_value(self) -> None:
+        """
+        Real failure mode: general-purpose local models routinely emit a
+        literal newline inside a string value (e.g. formatting a directory
+        tree "nicely") instead of escaping it as \\n. Strict JSON parsing
+        rejects this; parse_json_response must not.
+        """
+        text = '{\n  "tree": "root\nchild"\n}'
+        result = parse_json_response(text)
+        self.assertEqual(result["tree"], "root\nchild")
+
+    def test_json_with_fence_nested_inside_a_string_value(self) -> None:
+        """
+        Regression test for a real bug hit via a live end-to-end run: when a
+        JSON string value itself contains a ```fenced``` block (e.g. a
+        directory_structure field formatted as a markdown tree), the outer-
+        fence-stripping regex must not mistake that nested fence for the
+        response's own wrapper - and if it does, the final '{'...'}' fallback
+        must still search the ORIGINAL text, not a copy already corrupted by
+        that mismatch.
+        """
+        text = (
+            "{\n"
+            '  "project_id": "PROJ-001",\n'
+            '  "directory_structure": "```markdown\n'
+            "root/\n"
+            "  file.py\n"
+            '```",\n'
+            '  "modules": []\n'
+            "}"
+        )
+        result = parse_json_response(text)
+        self.assertEqual(result["project_id"], "PROJ-001")
+        self.assertEqual(result["modules"], [])
+        self.assertIn("root/", result["directory_structure"])
+
+    def test_json_embedded_in_surrounding_prose(self) -> None:
+        text = 'Sure, here is the plan:\n{"a": 1}\nHope that helps!'
+        self.assertEqual(parse_json_response(text), {"a": 1})
+
+    def test_unparseable_text_raises(self) -> None:
+        with self.assertRaises(PlanningInferenceError):
+            parse_json_response("This is not valid JSON string")
 
 
 if __name__ == "__main__":
