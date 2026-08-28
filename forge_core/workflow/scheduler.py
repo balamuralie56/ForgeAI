@@ -125,8 +125,18 @@ class WorkflowStageScheduler:
     def _execute_with_timeout(
         self, action: Callable[[], Any], timeout_seconds: float
     ) -> Any:
-        """Executes a callable inside a thread pool with a timeout constraint."""
-        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+        """
+        Executes a callable inside a thread pool with a timeout constraint.
+
+        Deliberately does not use the executor as a context manager: `__exit__`
+        calls `shutdown(wait=True)`, which blocks until the submitted action
+        actually finishes - defeating the timeout entirely when the action is a
+        long blocking call (e.g. LLM HTTP requests) that doesn't check for
+        cancellation. `shutdown(wait=False)` lets this raise on schedule and
+        leaves the orphaned worker thread to finish on its own in the background.
+        """
+        executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+        try:
             future = executor.submit(action)
             try:
                 return future.result(timeout=timeout_seconds)
@@ -134,3 +144,5 @@ class WorkflowStageScheduler:
                 raise TimeoutError(
                     f"Action timed out after {timeout_seconds} seconds."
                 ) from te
+        finally:
+            executor.shutdown(wait=False)
