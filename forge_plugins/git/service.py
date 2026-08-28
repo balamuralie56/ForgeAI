@@ -4,6 +4,7 @@ Service definitions and implementation for the ForgeAI Git Plugin.
 
 import logging
 from abc import ABC, abstractmethod
+from typing import Optional, Any
 
 from forge_core.kernel.service_registry import ServiceRegistry
 from forge_core.model_router.service import ModelRouterService
@@ -49,6 +50,7 @@ class GitService(ABC):
         implementation_report: ImplementationReport,
         test_report: TestReport,
         doc_report: DocumentationReport,
+        security_report: Optional[Any] = None,
     ) -> GitReport:
         """
         Executes the full git delivery pipeline for a generated project.
@@ -86,6 +88,7 @@ class ForgeAIGit(GitService):
         implementation_report: ImplementationReport,
         test_report: TestReport,
         doc_report: DocumentationReport,
+        security_report: Optional[Any] = None,
     ) -> GitReport:
         """
         Runs the full git delivery pipeline:
@@ -100,19 +103,29 @@ class ForgeAIGit(GitService):
             settings = self._config.get_system_settings()
             workspace_path = settings.workspace_dir
         except Exception as exc:
-            raise GitError(f"Failed to resolve system workspace settings: {exc}") from exc
+            raise GitError(
+                f"Failed to resolve system workspace settings: {exc}"
+            ) from exc
 
         # 2. Resolve full configuration
         try:
             full_config = self._config.get_full_config()
         except Exception as exc:
-            raise GitError(f"Failed to resolve full system configuration: {exc}") from exc
+            raise GitError(
+                f"Failed to resolve full system configuration: {exc}"
+            ) from exc
 
         # 3. Run pre-flight validation
         try:
             self.validator.validate(
-                plan, spec, implementation_report, test_report, doc_report,
-                workspace_path, full_config,
+                plan,
+                spec,
+                implementation_report,
+                test_report,
+                doc_report,
+                workspace_path,
+                full_config,
+                security_report=security_report,
             )
         except GitValidationError as val_err:
             logger.error(f"Git pre-flight validation failed: {val_err}")
@@ -134,6 +147,7 @@ class ForgeAIGit(GitService):
             implementation_report=implementation_report,
             test_report=test_report,
             doc_report=doc_report,
+            security_report=security_report,
             workspace=workspace_path,
             git_ops=git_ops,
             model_router=self._model_router,

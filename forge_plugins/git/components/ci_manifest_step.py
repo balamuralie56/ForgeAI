@@ -51,6 +51,14 @@ class CiManifestStep(GitPipelineStep):
         # Attempt to read coverage from test report summary
         coverage = self._extract_coverage(context)
 
+        security_status = "N/A"
+        security_score = 100.0
+        risk_score = 0.0
+        if context.security_report:
+            security_status = getattr(context.security_report, "status", "UNKNOWN")
+            security_score = getattr(context.security_report, "security_score", 100.0)
+            risk_score = getattr(context.security_report, "risk_score", 0.0)
+
         manifest: dict = {
             "project_id": context.spec.project_id,
             "branch": context.branch,
@@ -59,6 +67,9 @@ class CiManifestStep(GitPipelineStep):
             "commit_sha": sha,
             "test_status": test_status,
             "coverage": coverage,
+            "security_status": security_status,
+            "security_score": security_score,
+            "security_risk_score": risk_score,
             "implementation_files": len(context.implementation_report.files),
             "test_files": len(context.test_report.test_files),
             "docs_generated": doc_count,
@@ -90,6 +101,7 @@ class CiManifestStep(GitPipelineStep):
         """
         summary = getattr(context.test_report, "summary", "") or ""
         import re
+
         match = re.search(r"(\d+(?:\.\d+)?)\s*%", summary)
         if match:
             return f"{match.group(1)}%"

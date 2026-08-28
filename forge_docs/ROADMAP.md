@@ -65,13 +65,13 @@ This document serves as the project's north star, outlining the historical miles
 
 ### [v0.9.0] — Workflow & Orchestration
 - **Focus**: Workflow Orchestrator.
-- **Status**: Planned.
+- **Status**: Completed.
 - **Deliverables**: Coordinating the complete user request pipeline from Planner to Git with retries and profile defaults.
 
 ### [v0.9.5] — Platform Assurance
 - **Focus**: Security & Reviewer Plugins.
-- **Status**: Planned.
-- **Deliverables**: Secret scanning, vulnerability checking, code smell reviews, SOLID compliance scoring.
+- **Status**: In Progress — Security Plugin completed; Reviewer Plugin not started.
+- **Deliverables**: Secret scanning, AST-based vulnerability checks (eval/exec/shell/pickle/weak-crypto/SQL injection/temp files), dependency CVE checks, copyleft license scanning, SARIF export, and release-blocking quality gates — all shipped and tested (`forge_plugins/security/`, 238 tests). Code smell reviews and SOLID compliance scoring (the Reviewer Plugin) remain unbuilt.
 
 ### [v1.0.0] — ForgeAI Release
 - **Focus**: Production Release.

@@ -5,7 +5,6 @@ ChangelogStep — generates and writes a structured CHANGELOG.md to the workspac
 import logging
 from pathlib import Path
 
-from forge_plugins.planner.service import parse_json_response
 
 from ..utils.git_pipeline import GitContext, GitPipelineStep
 
@@ -90,9 +89,7 @@ class ChangelogStep(GitPipelineStep):
         Returns:
             str: Markdown changelog content.
         """
-        prompt_path = (
-            Path(__file__).parent.parent / "prompts" / "changelog.txt"
-        )
+        prompt_path = Path(__file__).parent.parent / "prompts" / "changelog.txt"
 
         if not prompt_path.exists():
             context.logger.warning(
@@ -100,9 +97,7 @@ class ChangelogStep(GitPipelineStep):
             )
             return _build_deterministic_changelog(context)
 
-        commit_summaries = "\n".join(
-            f"- {c.sha}: {c.message}" for c in context.commits
-        )
+        commit_summaries = "\n".join(f"- {c.sha}: {c.message}" for c in context.commits)
         version = context.semver.recommended if context.semver else "0.1.0"
 
         try:

@@ -87,12 +87,16 @@ class CommitStep(GitPipelineStep):
 
         # Determine commit message strategy
         git_config = getattr(context.configuration, "git", None)
-        use_llm = getattr(git_config, "llm_commit_messages", False) if git_config else False
+        use_llm = (
+            getattr(git_config, "llm_commit_messages", False) if git_config else False
+        )
 
         if use_llm:
             message = self._generate_llm_message(context, file_paths)
         else:
-            message = _build_deterministic_message(context.spec.project_id, len(file_paths))
+            message = _build_deterministic_message(
+                context.spec.project_id, len(file_paths)
+            )
 
         context.logger.info(f"Committing with message: {message}")
         sha = context.git_ops.commit(message)

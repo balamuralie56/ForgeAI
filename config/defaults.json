@@ -29,5 +29,27 @@
         "github_repo": "",
         "default_branch": "main",
         "branch_prefix": "forge"
+    },
+    "security": {
+        "enabled": true,
+        "secret_scan": true,
+        "dependency_scan": true,
+        "ast_scan": true,
+        "license_scan": true,
+        "llm_review": true,
+        "block_release": true,
+        "max_risk_score": 30.0,
+        "max_high": 2,
+        "max_critical": 0,
+        "rules": {
+            "SEC-001-EVAL": true,
+            "SEC-002-EXEC": true,
+            "SEC-003-SHELL": true,
+            "SEC-004-PICKLE": true,
+            "SEC-005-WEAKCRYPTO": true,
+            "SEC-006-HARDCODED": true,
+            "SEC-007-SQL": true,
+            "SEC-008-TEMPFILE": true
+        }
     }
 }

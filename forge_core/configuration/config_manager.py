@@ -70,6 +70,8 @@ class ConfigurationManager(ConfigurationService):
                 system=system_cfg,
                 models=models_cfg,
                 plugins=plugins_cfg,
+                git=env_overridden_data.get("git", {}),
+                security=env_overridden_data.get("security", {}),
             )
         except TypeError as e:
             raise ConfigurationValidationError(f"Schema mismatch: {e}") from e
@@ -116,6 +118,10 @@ class ConfigurationManager(ConfigurationService):
         if os.environ.get("FORGE_MODEL"):
             data.setdefault("models", {})["default_model"] = os.environ.get(
                 "FORGE_MODEL"
+            )
+        if os.environ.get("FORGE_GITHUB_TOKEN"):
+            data.setdefault("git", {})["github_token"] = os.environ.get(
+                "FORGE_GITHUB_TOKEN"
             )
         return data
 

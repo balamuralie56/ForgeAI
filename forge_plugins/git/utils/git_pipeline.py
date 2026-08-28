@@ -41,6 +41,7 @@ class GitContext:
         event_bus: EventBusService,
         configuration: ForgeConfig,
         logger: logging.Logger,
+        security_report: Optional[Any] = None,
     ) -> None:
         """Initialises the shared git pipeline context."""
         self.plan = plan
@@ -48,6 +49,7 @@ class GitContext:
         self.implementation_report = implementation_report
         self.test_report = test_report
         self.doc_report = doc_report
+        self.security_report = security_report
         self.workspace = workspace
         self.git_ops = git_ops
         self.model_router = model_router

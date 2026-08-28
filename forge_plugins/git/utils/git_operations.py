@@ -87,9 +87,13 @@ class GitOperations:
             branch (str): Target branch name.
             create (bool): If True, creates the branch before checking out.
         """
-        args = ["git", "checkout", "-b", branch] if create else ["git", "checkout", branch]
+        args = (
+            ["git", "checkout", "-b", branch] if create else ["git", "checkout", branch]
+        )
         _run(args, self.workspace)
-        logger.info(f"{'Created and checked out' if create else 'Checked out'} branch: {branch}")
+        logger.info(
+            f"{'Created and checked out' if create else 'Checked out'} branch: {branch}"
+        )
 
     def add(self, paths: Optional[List[str]] = None) -> None:
         """
@@ -103,7 +107,9 @@ class GitOperations:
                 _run(["git", "add", path], self.workspace)
         else:
             _run(["git", "add", "."], self.workspace)
-        logger.info(f"Staged {'specific paths' if paths else 'all changes'} for commit.")
+        logger.info(
+            f"Staged {'specific paths' if paths else 'all changes'} for commit."
+        )
 
     def commit(self, message: str) -> str:
         """

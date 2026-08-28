@@ -105,6 +105,24 @@ class TestConfigurationManager(unittest.TestCase):
         finally:
             del os.environ["FORGE_MODEL"]
 
+    def test_github_token_environment_override(self) -> None:
+        """FORGE_GITHUB_TOKEN should override any github_token set in the config file,
+        keeping the secret out of forge.json in deployed/CI environments."""
+        user_config = {"git": {"github_token": "file-based-token"}}
+        self.config_file.write_text(json.dumps(user_config), encoding="utf-8")
+
+        os.environ["FORGE_GITHUB_TOKEN"] = "env-based-token"
+
+        try:
+            manager = ConfigurationManager(
+                config_path=str(self.config_file), defaults_path=str(self.defaults_file)
+            )
+            self.assertEqual(
+                manager.get_full_config().git["github_token"], "env-based-token"
+            )
+        finally:
+            del os.environ["FORGE_GITHUB_TOKEN"]
+
     def test_save_configuration_public_api(self) -> None:
         """Issue 1 & 2: Tests saving via public API and standardized backup naming."""
         self.config_file.write_text("{}", encoding="utf-8")

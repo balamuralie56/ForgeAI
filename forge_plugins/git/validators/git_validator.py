@@ -4,6 +4,7 @@ Input validation for the Git Plugin pre-flight checks.
 
 import logging
 import shutil
+from typing import Optional, Any
 from pathlib import Path
 
 from forge_plugins.planner.models import ProjectPlan
@@ -32,6 +33,7 @@ class GitValidator:
         doc_report: DocumentationReport,
         workspace_path: str,
         configuration: ForgeConfig,
+        security_report: Optional[Any] = None,
     ) -> None:
         """
         Runs all pre-flight validation checks.
@@ -50,10 +52,13 @@ class GitValidator:
         """
         logger.info("Starting Git Plugin pre-flight validation...")
 
-        self._validate_artifacts(plan, spec, implementation_report, test_report, doc_report)
+        self._validate_artifacts(
+            plan, spec, implementation_report, test_report, doc_report
+        )
         self._validate_workspace(workspace_path)
         self._validate_git_binary()
         self._validate_github_config(configuration)
+        self._validate_security_gates(configuration, security_report)
 
         logger.info("Git Plugin pre-flight validation completed successfully.")
 
@@ -136,4 +141,49 @@ class GitValidator:
         if missing:
             raise GitValidationError(
                 f"GitHub mode is enabled but the following config fields are missing: {', '.join(missing)}"
+            )
+
+    def _validate_security_gates(
+        self, configuration: ForgeConfig, security_report: Optional[Any]
+    ) -> None:
+        """Enforces security quality release gates prior to committing/releasing."""
+        if security_report is None:
+            return
+
+        sec_config = getattr(configuration, "security", {})
+        if not sec_config or not sec_config.get("block_release", True):
+            return
+
+        max_critical = sec_config.get("max_critical", 0)
+        max_high = sec_config.get("max_high", 2)
+        max_risk = sec_config.get("max_risk_score", 30.0)
+
+        findings = getattr(security_report, "findings", [])
+        risk_score = getattr(security_report, "risk_score", 0.0)
+
+        crit_count = sum(
+            1
+            for f in findings
+            if getattr(f, "severity", None)
+            and getattr(f, "severity").value == "CRITICAL"
+        )
+        high_count = sum(
+            1
+            for f in findings
+            if getattr(f, "severity", None) and getattr(f, "severity").value == "HIGH"
+        )
+
+        if crit_count > max_critical:
+            raise GitValidationError(
+                f"Release blocked by Security Gate: {crit_count} Critical violations found (Max allowed: {max_critical})."
+            )
+
+        if high_count > max_high:
+            raise GitValidationError(
+                f"Release blocked by Security Gate: {high_count} High violations found (Max allowed: {max_high})."
+            )
+
+        if risk_score > max_risk:
+            raise GitValidationError(
+                f"Release blocked by Security Gate: Overall Risk Score {risk_score} exceeds limit of {max_risk}."
             )

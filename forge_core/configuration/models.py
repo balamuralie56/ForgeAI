@@ -3,7 +3,7 @@ Data models for the ForgeAI configuration system.
 """
 
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Dict, Any
 from .exceptions import ConfigurationValidationError
 
 
@@ -62,3 +62,5 @@ class ForgeConfig:
     system: SystemSettings = field(default_factory=SystemSettings)
     models: ModelSettings = None  # type: ignore # Instantiated via defaults.json
     plugins: PluginSettings = field(default_factory=PluginSettings)
+    git: Dict[str, Any] = field(default_factory=dict)
+    security: Dict[str, Any] = field(default_factory=dict)

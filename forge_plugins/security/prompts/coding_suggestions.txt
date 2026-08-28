@@ -1,0 +1,4 @@
+Generate secure coding remediation suggestions for the following list of findings:
+{findings}
+
+Make sure to offer clear coding guidelines.

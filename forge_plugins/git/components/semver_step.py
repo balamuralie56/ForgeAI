@@ -2,7 +2,6 @@
 SemverStep — analyses the commit log since the last tag and recommends a version bump.
 """
 
-import json
 import logging
 import re
 
@@ -84,14 +83,18 @@ class SemverStep(GitPipelineStep):
             context (GitContext): The shared pipeline context.
         """
         current_tag = context.git_ops.describe()
-        commit_log = context.git_ops.log(since_tag=current_tag if current_tag != "0.0.0" else None)
+        commit_log = context.git_ops.log(
+            since_tag=current_tag if current_tag != "0.0.0" else None
+        )
 
         context.logger.info(
             f"Analysing {len(commit_log.splitlines())} commits for semver bump. Current tag: {current_tag}"
         )
 
         bump_type = self._classify_bump(context, commit_log)
-        rationale = f"Determined '{bump_type}' bump from commit history since {current_tag}."
+        rationale = (
+            f"Determined '{bump_type}' bump from commit history since {current_tag}."
+        )
         recommended = _parse_next_version(current_tag, bump_type)
 
         context.semver = SemverBump(
@@ -115,12 +118,12 @@ class SemverStep(GitPipelineStep):
         Returns:
             str: 'MAJOR', 'MINOR', or 'PATCH'.
         """
-        prompt_path = (
-            __file__.replace("components/semver_step.py", "prompts/semver.txt")
-            .replace("components\\semver_step.py", "prompts\\semver.txt")
-        )
+        prompt_path = __file__.replace(
+            "components/semver_step.py", "prompts/semver.txt"
+        ).replace("components\\semver_step.py", "prompts\\semver.txt")
 
         from pathlib import Path
+
         prompt_file = Path(prompt_path)
         if not prompt_file.exists():
             # Inline fallback prompt if file missing
@@ -134,7 +137,9 @@ class SemverStep(GitPipelineStep):
         else:
             prompt_template = prompt_file.read_text(encoding="utf-8")
 
-        prompt = prompt_template.format(commit_log=commit_log or "(no commits since last tag)")
+        prompt = prompt_template.format(
+            commit_log=commit_log or "(no commits since last tag)"
+        )
 
         try:
             response = context.model_router.generate(prompt)

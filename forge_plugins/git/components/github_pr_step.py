@@ -10,7 +10,6 @@ from forge_core.event_bus.models import Event
 
 from ..utils.git_pipeline import GitContext, GitPipelineStep
 from ..models import GitHubPR
-from ..exceptions import GitHubError
 
 logger = logging.getLogger("ForgeAI.Plugins.Git.Components")
 
@@ -34,7 +33,9 @@ class GitHubPRStep(GitPipelineStep):
             context (GitContext): The shared pipeline context.
         """
         git_config = getattr(context.configuration, "git", None)
-        github_enabled = getattr(git_config, "github_enabled", False) if git_config else False
+        github_enabled = (
+            getattr(git_config, "github_enabled", False) if git_config else False
+        )
 
         if not github_enabled:
             context.logger.info("GitHub integration disabled — skipping PR creation.")
@@ -50,7 +51,7 @@ class GitHubPRStep(GitPipelineStep):
             return
 
         try:
-            from github import Github, GithubException  # type: ignore[import-not-found]
+            from github import Github  # type: ignore[import-not-found]
         except ImportError:
             context.logger.warning(
                 "PyGithub is not installed. GitHub PR creation skipped. "
@@ -91,14 +92,10 @@ class GitHubPRStep(GitPipelineStep):
                 branch=branch,
                 base=base_branch,
             )
-            context.logger.info(
-                f"GitHub PR created: #{pr.number} — {pr.html_url}"
-            )
+            context.logger.info(f"GitHub PR created: #{pr.number} — {pr.html_url}")
         except Exception as exc:
             # GitHub errors are non-fatal — log and continue
-            context.logger.error(
-                f"GitHub PR creation failed (non-fatal): {exc}"
-            )
+            context.logger.error(f"GitHub PR creation failed (non-fatal): {exc}")
             context.event_bus.publish(
                 Event(
                     event_type="git.operation_failed",
@@ -127,9 +124,7 @@ class GitHubPRStep(GitPipelineStep):
         if not prompt_path.exists():
             return self._deterministic_pr_content(context)
 
-        commit_summaries = "\n".join(
-            f"- {c.sha}: {c.message}" for c in context.commits
-        )
+        commit_summaries = "\n".join(f"- {c.sha}: {c.message}" for c in context.commits)
         version = context.semver.recommended if context.semver else "0.1.0"
 
         try:

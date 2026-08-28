@@ -29,7 +29,9 @@ class BranchStep(GitPipelineStep):
             context (GitContext): The shared pipeline context.
         """
         git_config = getattr(context.configuration, "git", None)
-        prefix = getattr(git_config, "branch_prefix", "forge") if git_config else "forge"
+        prefix = (
+            getattr(git_config, "branch_prefix", "forge") if git_config else "forge"
+        )
 
         branch_name = f"{prefix}/{context.spec.project_id}"
         context.logger.info(f"Preparing delivery branch: {branch_name}")

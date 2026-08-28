@@ -8,9 +8,9 @@ import shutil
 import subprocess
 import tempfile
 import unittest
-from datetime import datetime, timezone
 from pathlib import Path
-from unittest.mock import MagicMock, patch, call
+from typing import Any, Dict
+from unittest.mock import MagicMock, patch
 
 from forge_core.kernel.service_registry import ServiceRegistry
 from forge_core.model_router.service import ModelRouterService, ModelResponse
@@ -46,8 +46,15 @@ from forge_plugins.git.utils.git_pipeline import (
     GitPipelineStep,
 )
 from forge_plugins.git.components.branch_step import BranchStep
-from forge_plugins.git.components.commit_step import CommitStep, _build_deterministic_message
-from forge_plugins.git.components.semver_step import SemverStep, _parse_next_version, _classify_bump_deterministic
+from forge_plugins.git.components.commit_step import (
+    CommitStep,
+    _build_deterministic_message,
+)
+from forge_plugins.git.components.semver_step import (
+    SemverStep,
+    _parse_next_version,
+    _classify_bump_deterministic,
+)
 from forge_plugins.git.components.tag_step import TagStep
 from forge_plugins.git.components.changelog_step import ChangelogStep
 from forge_plugins.git.components.github_pr_step import GitHubPRStep
@@ -58,13 +65,28 @@ from forge_plugins.git.plugin import GitPlugin
 def _make_git_repo(path: str) -> None:
     """Initialises a minimal git repository at the given path for testing."""
     subprocess.run(["git", "init", path], capture_output=True, check=True)
-    subprocess.run(["git", "config", "user.email", "test@forge"], cwd=path, capture_output=True, check=True)
-    subprocess.run(["git", "config", "user.name", "ForgeAI Test"], cwd=path, capture_output=True, check=True)
+    subprocess.run(
+        ["git", "config", "user.email", "test@forge"],
+        cwd=path,
+        capture_output=True,
+        check=True,
+    )
+    subprocess.run(
+        ["git", "config", "user.name", "ForgeAI Test"],
+        cwd=path,
+        capture_output=True,
+        check=True,
+    )
     # Create initial commit so branching works
     dummy = Path(path) / ".forge_init"
     dummy.write_text("init", encoding="utf-8")
     subprocess.run(["git", "add", "."], cwd=path, capture_output=True, check=True)
-    subprocess.run(["git", "commit", "-m", "chore: initial commit"], cwd=path, capture_output=True, check=True)
+    subprocess.run(
+        ["git", "commit", "-m", "chore: initial commit"],
+        cwd=path,
+        capture_output=True,
+        check=True,
+    )
 
 
 class TestGitPlugin(unittest.TestCase):
@@ -135,14 +157,20 @@ class TestGitPlugin(unittest.TestCase):
         )
         impl = ImplementationReport(
             project_id="todo-api",
-            files=[GeneratedFile(path="src/main.py", content="# main", file_type="backend")],
+            files=[
+                GeneratedFile(path="src/main.py", content="# main", file_type="backend")
+            ],
             status="SUCCESS",
             summary="",
         )
         test_rep = TestReport(
             project_id="todo-api",
             test_files=[
-                GeneratedTestFile(path="tests/test_main.py", content="def test_ok(): pass", test_type="unit")
+                GeneratedTestFile(
+                    path="tests/test_main.py",
+                    content="def test_ok(): pass",
+                    test_type="unit",
+                )
             ],
             status="SUCCESS",
             summary="Coverage: 91%",
@@ -150,7 +178,9 @@ class TestGitPlugin(unittest.TestCase):
         doc_rep = DocumentationReport(
             project_id="todo-api",
             doc_files=[
-                GeneratedDocFile(path="docs/README.md", content="# README", category="project")
+                GeneratedDocFile(
+                    path="docs/README.md", content="# README", category="project"
+                )
             ],
             status="SUCCESS",
             summary="",
@@ -179,16 +209,33 @@ class TestGitPlugin(unittest.TestCase):
 
     def test_models_to_dict_from_dict_round_trip(self) -> None:
         """Validates full to_dict / from_dict round-trip for all Git models."""
-        commit = GitCommit(sha="abc1234", message="feat: add API", files=["src/main.py"], author="ForgeAI", timestamp="2026-01-01T00:00:00Z")
+        commit = GitCommit(
+            sha="abc1234",
+            message="feat: add API",
+            files=["src/main.py"],
+            author="ForgeAI",
+            timestamp="2026-01-01T00:00:00Z",
+        )
         self.assertEqual(GitCommit.from_dict(commit.to_dict()).sha, "abc1234")
 
         tag = GitTag(name="v1.0.0", sha="abc1234", annotation="release")
         self.assertEqual(GitTag.from_dict(tag.to_dict()).name, "v1.0.0")
 
-        semver = SemverBump(current="0.9.0", recommended="1.0.0", bump_type="MAJOR", rationale="breaking change")
+        semver = SemverBump(
+            current="0.9.0",
+            recommended="1.0.0",
+            bump_type="MAJOR",
+            rationale="breaking change",
+        )
         self.assertEqual(SemverBump.from_dict(semver.to_dict()).bump_type, "MAJOR")
 
-        pr = GitHubPR(url="https://github.com/pr/1", number=1, title="PR", branch="forge/todo-api", base="main")
+        pr = GitHubPR(
+            url="https://github.com/pr/1",
+            number=1,
+            title="PR",
+            branch="forge/todo-api",
+            base="main",
+        )
         self.assertEqual(GitHubPR.from_dict(pr.to_dict()).number, 1)
 
         report = GitReport(
@@ -205,12 +252,24 @@ class TestGitPlugin(unittest.TestCase):
         restored = GitReport.from_dict(report.to_dict())
         self.assertEqual(restored.project_id, "todo-api")
         self.assertEqual(restored.status, "SUCCESS")
+        self.assertIsNotNone(restored.semver)
+        assert restored.semver is not None
         self.assertEqual(restored.semver.bump_type, "MAJOR")
         self.assertIsNotNone(restored.pr)
 
     def test_git_report_from_dict_no_semver_or_pr(self) -> None:
         """Validates GitReport.from_dict handles None semver and pr gracefully."""
-        data = {"project_id": "p1", "commits": [], "tags": [], "semver": None, "pr": None, "changelog": "", "ci_manifest": {}, "status": "PENDING", "summary": ""}
+        data: Dict[str, Any] = {
+            "project_id": "p1",
+            "commits": [],
+            "tags": [],
+            "semver": None,
+            "pr": None,
+            "changelog": "",
+            "ci_manifest": {},
+            "status": "PENDING",
+            "summary": "",
+        }
         report = GitReport.from_dict(data)
         self.assertIsNone(report.semver)
         self.assertIsNone(report.pr)
@@ -229,7 +288,9 @@ class TestGitPlugin(unittest.TestCase):
         """Verifies GitValidator passes all valid inputs without exception."""
         validator = GitValidator()
         plan, spec, impl, test_rep, doc_rep = self._make_artifacts()
-        validator.validate(plan, spec, impl, test_rep, doc_rep, self.workspace_path, self.full_config)
+        validator.validate(
+            plan, spec, impl, test_rep, doc_rep, self.workspace_path, self.full_config
+        )
 
     def test_validator_rejects_missing_plan(self) -> None:
         """Verifies GitValidator raises GitValidationError when plan is None."""
@@ -271,14 +332,24 @@ class TestGitPlugin(unittest.TestCase):
         validator = GitValidator()
         plan, spec, impl, test_rep, doc_rep = self._make_artifacts()
         with self.assertRaises(GitValidationError):
-            validator.validate(plan, spec, impl, test_rep, doc_rep, "", self.full_config)
+            validator.validate(
+                plan, spec, impl, test_rep, doc_rep, "", self.full_config
+            )
 
     def test_validator_rejects_nonexistent_workspace(self) -> None:
         """Verifies GitValidator raises GitValidationError for missing directory."""
         validator = GitValidator()
         plan, spec, impl, test_rep, doc_rep = self._make_artifacts()
         with self.assertRaises(GitValidationError):
-            validator.validate(plan, spec, impl, test_rep, doc_rep, "nonexistent_dir_123", self.full_config)
+            validator.validate(
+                plan,
+                spec,
+                impl,
+                test_rep,
+                doc_rep,
+                "nonexistent_dir_123",
+                self.full_config,
+            )
 
     @patch("shutil.which", return_value=None)
     def test_validator_rejects_missing_git_binary(self, mock_which) -> None:
@@ -286,7 +357,15 @@ class TestGitPlugin(unittest.TestCase):
         validator = GitValidator()
         plan, spec, impl, test_rep, doc_rep = self._make_artifacts()
         with self.assertRaises(GitValidationError):
-            validator.validate(plan, spec, impl, test_rep, doc_rep, self.workspace_path, self.full_config)
+            validator.validate(
+                plan,
+                spec,
+                impl,
+                test_rep,
+                doc_rep,
+                self.workspace_path,
+                self.full_config,
+            )
 
     # ─── GitOperations ───────────────────────────────────────────────────────
 
@@ -319,7 +398,8 @@ class TestGitPlugin(unittest.TestCase):
 
     def test_git_operations_nonzero_exit_raises(self) -> None:
         """Verifies GitOperations raises GitOperationError on non-zero exit code."""
-        import tempfile, os
+        import tempfile
+
         # Create a temp dir that is guaranteed to NOT be inside any git repository
         # by using the system temp root, which is above any user project.
         with tempfile.TemporaryDirectory(dir=tempfile.gettempdir()) as non_git_dir:
@@ -453,11 +533,15 @@ class TestGitPlugin(unittest.TestCase):
 
     def test_classify_bump_deterministic_major(self) -> None:
         """Validates rule-based classifier detects breaking change."""
-        self.assertEqual(_classify_bump_deterministic("feat!: breaking change in API"), "MAJOR")
+        self.assertEqual(
+            _classify_bump_deterministic("feat!: breaking change in API"), "MAJOR"
+        )
 
     def test_classify_bump_deterministic_minor(self) -> None:
         """Validates rule-based classifier detects new feature."""
-        self.assertEqual(_classify_bump_deterministic("feat: add new endpoint"), "MINOR")
+        self.assertEqual(
+            _classify_bump_deterministic("feat: add new endpoint"), "MINOR"
+        )
 
     def test_classify_bump_deterministic_patch(self) -> None:
         """Validates rule-based classifier defaults to PATCH."""
@@ -478,6 +562,7 @@ class TestGitPlugin(unittest.TestCase):
         SemverStep().run(context)
 
         self.assertIsNotNone(context.semver)
+        assert context.semver is not None
         self.assertEqual(context.semver.bump_type, "MINOR")
         self.assertEqual(context.semver.current, "1.0.0")
         self.assertEqual(context.semver.recommended, "1.1.0")
@@ -497,6 +582,7 @@ class TestGitPlugin(unittest.TestCase):
         SemverStep().run(context)
 
         self.assertIsNotNone(context.semver)
+        assert context.semver is not None
         self.assertIn(context.semver.bump_type, ("MAJOR", "MINOR", "PATCH"))
 
     # ─── TagStep ─────────────────────────────────────────────────────────────
@@ -506,7 +592,12 @@ class TestGitPlugin(unittest.TestCase):
         git_ops = MagicMock(spec=GitOperations)
         git_ops.rev_parse.return_value = "abc1234"
         context = self._make_git_context(git_ops=git_ops)
-        context.semver = SemverBump(current="0.1.0", recommended="0.2.0", bump_type="MINOR", rationale="New feature.")
+        context.semver = SemverBump(
+            current="0.1.0",
+            recommended="0.2.0",
+            bump_type="MINOR",
+            rationale="New feature.",
+        )
 
         TagStep().run(context)
 
@@ -534,9 +625,17 @@ class TestGitPlugin(unittest.TestCase):
         self.mock_router.generate.side_effect = Exception("offline")
         git_ops = MagicMock(spec=GitOperations)
         context = self._make_git_context(git_ops=git_ops)
-        context.semver = SemverBump(current="0.1.0", recommended="0.2.0", bump_type="MINOR", rationale="")
+        context.semver = SemverBump(
+            current="0.1.0", recommended="0.2.0", bump_type="MINOR", rationale=""
+        )
         context.commits = [
-            GitCommit(sha="aaa", message="feat: add routes", files=[], author="ForgeAI", timestamp="")
+            GitCommit(
+                sha="aaa",
+                message="feat: add routes",
+                files=[],
+                author="ForgeAI",
+                timestamp="",
+            )
         ]
 
         ChangelogStep().run(context)
@@ -554,7 +653,9 @@ class TestGitPlugin(unittest.TestCase):
         )
         git_ops = MagicMock(spec=GitOperations)
         context = self._make_git_context(git_ops=git_ops)
-        context.semver = SemverBump(current="0.1.0", recommended="0.2.0", bump_type="MINOR", rationale="")
+        context.semver = SemverBump(
+            current="0.1.0", recommended="0.2.0", bump_type="MINOR", rationale=""
+        )
 
         ChangelogStep().run(context)
 
@@ -579,7 +680,6 @@ class TestGitPlugin(unittest.TestCase):
 
     def test_github_pr_step_skipped_when_pygithub_missing(self) -> None:
         """Verifies GitHubPRStep skips gracefully when PyGithub is not installed."""
-        import types
 
         git_ops = MagicMock(spec=GitOperations)
         context = self._make_git_context(git_ops=git_ops)
@@ -609,9 +709,17 @@ class TestGitPlugin(unittest.TestCase):
         git_ops.rev_parse.return_value = "abc1234"
         context = self._make_git_context(git_ops=git_ops)
         context.branch = "forge/todo-api"
-        context.semver = SemverBump(current="0.1.0", recommended="0.2.0", bump_type="MINOR", rationale="")
+        context.semver = SemverBump(
+            current="0.1.0", recommended="0.2.0", bump_type="MINOR", rationale=""
+        )
         context.commits = [
-            GitCommit(sha="abc1234", message="feat: api", files=[], author="ForgeAI", timestamp="")
+            GitCommit(
+                sha="abc1234",
+                message="feat: api",
+                files=[],
+                author="ForgeAI",
+                timestamp="",
+            )
         ]
 
         CiManifestStep().run(context)
@@ -633,7 +741,9 @@ class TestGitPlugin(unittest.TestCase):
         git_ops = MagicMock(spec=GitOperations)
         git_ops.rev_parse.return_value = "abc"
         context = self._make_git_context(git_ops=git_ops)
-        context.semver = SemverBump(current="0.0.0", recommended="0.0.1", bump_type="PATCH", rationale="")
+        context.semver = SemverBump(
+            current="0.0.0", recommended="0.0.1", bump_type="PATCH", rationale=""
+        )
 
         CiManifestStep().run(context)
 
@@ -645,7 +755,9 @@ class TestGitPlugin(unittest.TestCase):
 
     def test_service_validation_failure_publishes_event(self) -> None:
         """Verifies ForgeAIGit raises GitValidationError and publishes validation_failed event."""
-        self.sys_settings = SystemSettings(workspace_dir="nonexistent_dir_999", log_level="INFO")
+        self.sys_settings = SystemSettings(
+            workspace_dir="nonexistent_dir_999", log_level="INFO"
+        )
         self.mock_config.get_system_settings.return_value = self.sys_settings
 
         plan, spec, impl, test_rep, doc_rep = self._make_artifacts()
@@ -675,7 +787,12 @@ class TestGitPlugin(unittest.TestCase):
                     ctx.branch = "forge/todo-api"
                     ctx.commits = []
                     ctx.tags = []
-                    ctx.semver = SemverBump(current="0.1.0", recommended="0.2.0", bump_type="MINOR", rationale="")
+                    ctx.semver = SemverBump(
+                        current="0.1.0",
+                        recommended="0.2.0",
+                        bump_type="MINOR",
+                        rationale="",
+                    )
                     ctx.pr = None
                     ctx.changelog = "# Changelog"
                     ctx.ci_manifest = {}
@@ -689,7 +806,9 @@ class TestGitPlugin(unittest.TestCase):
                     "set_project_state",
                     side_effect=Exception("DB locked"),
                 ):
-                    report = self.git_service.commit_project(plan, spec, impl, test_rep, doc_rep)
+                    report = self.git_service.commit_project(
+                        plan, spec, impl, test_rep, doc_rep
+                    )
                     self.assertEqual(report.status, "SUCCESS")
 
     # ─── Plugin lifecycle ─────────────────────────────────────────────────────
@@ -722,7 +841,9 @@ class TestGitPlugin(unittest.TestCase):
         context.configuration = mock_config
 
         self.mock_router.generate.return_value = ModelResponse(
-            text="feat(todo-api): add generated API routes", raw_response={}, model_name="mock"
+            text="feat(todo-api): add generated API routes",
+            raw_response={},
+            model_name="mock",
         )
 
         CommitStep().run(context)
@@ -758,8 +879,18 @@ class TestGitPlugin(unittest.TestCase):
         git_ops = MagicMock(spec=GitOperations)
         context = self._make_git_context(git_ops=git_ops)
         context.branch = "forge/todo-api"
-        context.semver = SemverBump(current="0.1.0", recommended="0.2.0", bump_type="MINOR", rationale="")
-        context.commits = [GitCommit(sha="abc", message="feat: new route", files=[], author="ForgeAI", timestamp="")]
+        context.semver = SemverBump(
+            current="0.1.0", recommended="0.2.0", bump_type="MINOR", rationale=""
+        )
+        context.commits = [
+            GitCommit(
+                sha="abc",
+                message="feat: new route",
+                files=[],
+                author="ForgeAI",
+                timestamp="",
+            )
+        ]
 
         mock_git_conf = MagicMock()
         mock_git_conf.github_enabled = True
@@ -791,8 +922,11 @@ class TestGitPlugin(unittest.TestCase):
 
         mock_github_cls = MagicMock(return_value=mock_gh_instance)
 
-        with patch.dict("sys.modules", {"github": MagicMock(Github=mock_github_cls, GithubException=Exception)}):
-            with patch("forge_plugins.git.components.github_pr_step.GitHubPRStep.run") as mock_run:
+        with patch.dict(
+            "sys.modules",
+            {"github": MagicMock(Github=mock_github_cls, GithubException=Exception)},
+        ):
+            with patch("forge_plugins.git.components.github_pr_step.GitHubPRStep.run"):
                 # Directly test _generate_pr_content + deterministic fallback
                 step = GitHubPRStep()
                 title, body = step._deterministic_pr_content(context)
@@ -843,10 +977,15 @@ class TestGitPlugin(unittest.TestCase):
             ops.add()
             ops.commit("chore: init")
             # Detect the actual default branch name (main or master depending on git config)
-            default_branch = subprocess.run(
-                ["git", "symbolic-ref", "--short", "HEAD"],
-                cwd=tmp, capture_output=True, text=True
-            ).stdout.strip() or "main"
+            default_branch = (
+                subprocess.run(
+                    ["git", "symbolic-ref", "--short", "HEAD"],
+                    cwd=tmp,
+                    capture_output=True,
+                    text=True,
+                ).stdout.strip()
+                or "main"
+            )
             ops.checkout("feature/test", create=True)
             # Check back out to the actual default branch
             ops.checkout(default_branch, create=False)
@@ -906,7 +1045,15 @@ class TestGitPlugin(unittest.TestCase):
         config_with_github.git = mock_git_conf
 
         with self.assertRaises(GitValidationError) as cm:
-            validator.validate(plan, spec, impl, test_rep, doc_rep, self.workspace_path, config_with_github)
+            validator.validate(
+                plan,
+                spec,
+                impl,
+                test_rep,
+                doc_rep,
+                self.workspace_path,
+                config_with_github,
+            )
         self.assertIn("github_token", str(cm.exception))
 
     def test_validator_no_git_config_block_is_ok(self) -> None:
@@ -915,14 +1062,18 @@ class TestGitPlugin(unittest.TestCase):
         plan, spec, impl, test_rep, doc_rep = self._make_artifacts()
         config_no_git = MagicMock(spec=ForgeConfig)
         config_no_git.git = None
-        validator.validate(plan, spec, impl, test_rep, doc_rep, self.workspace_path, config_no_git)
+        validator.validate(
+            plan, spec, impl, test_rep, doc_rep, self.workspace_path, config_no_git
+        )
 
     # ─── Service pipeline error path ──────────────────────────────────────────
 
     def test_service_operation_error_propagates(self) -> None:
         """Verifies ForgeAIGit re-raises GitOperationError from a failing pipeline step."""
         with patch.object(GitValidator, "validate", return_value=None):
-            with patch.object(GitPipeline, "run", side_effect=GitOperationError("git failed")):
+            with patch.object(
+                GitPipeline, "run", side_effect=GitOperationError("git failed")
+            ):
                 plan, spec, impl, test_rep, doc_rep = self._make_artifacts()
                 with self.assertRaises(GitOperationError):
                     self.git_service.commit_project(plan, spec, impl, test_rep, doc_rep)
@@ -930,7 +1081,9 @@ class TestGitPlugin(unittest.TestCase):
     def test_service_unexpected_error_wrapped_as_operation_error(self) -> None:
         """Verifies ForgeAIGit wraps unexpected pipeline errors into GitOperationError."""
         with patch.object(GitValidator, "validate", return_value=None):
-            with patch.object(GitPipeline, "run", side_effect=RuntimeError("unexpected crash")):
+            with patch.object(
+                GitPipeline, "run", side_effect=RuntimeError("unexpected crash")
+            ):
                 plan, spec, impl, test_rep, doc_rep = self._make_artifacts()
                 with self.assertRaises(GitOperationError):
                     self.git_service.commit_project(plan, spec, impl, test_rep, doc_rep)
@@ -950,7 +1103,9 @@ class TestGitPlugin(unittest.TestCase):
         git_ops.rev_parse.return_value = "head123"
         context = self._make_git_context(git_ops=git_ops)
         context.branch = "forge/todo-api"
-        context.semver = SemverBump(current="0.0.0", recommended="0.1.0", bump_type="PATCH", rationale="")
+        context.semver = SemverBump(
+            current="0.0.0", recommended="0.1.0", bump_type="PATCH", rationale=""
+        )
         context.commits = []  # no commits
 
         CiManifestStep().run(context)
@@ -964,7 +1119,9 @@ class TestGitPlugin(unittest.TestCase):
         git_ops.rev_parse.side_effect = GitOperationError("no HEAD")
         context = self._make_git_context(git_ops=git_ops)
         context.branch = "forge/todo-api"
-        context.semver = SemverBump(current="0.0.0", recommended="0.1.0", bump_type="PATCH", rationale="")
+        context.semver = SemverBump(
+            current="0.0.0", recommended="0.1.0", bump_type="PATCH", rationale=""
+        )
         context.commits = []
 
         CiManifestStep().run(context)
