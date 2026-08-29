@@ -91,9 +91,14 @@ class OllamaProvider(BaseHTTPProvider):
     """
 
     def __init__(
-        self, base_url: str, default_model: str, timeout: float = 300.0
+        self,
+        base_url: str,
+        default_model: str,
+        timeout: float = 300.0,
+        keep_alive: str = "30m",
     ) -> None:
         super().__init__("ollama", base_url, default_model, timeout)
+        self.keep_alive = keep_alive
 
     def generate(
         self, prompt: str, model: Optional[str] = None, **kwargs: Any
@@ -113,6 +118,7 @@ class OllamaProvider(BaseHTTPProvider):
             "model": target_model,
             "prompt": prompt,
             "stream": False,
+            "keep_alive": self.keep_alive,
         }
         if options:
             payload["options"] = options
@@ -161,6 +167,7 @@ class OllamaProvider(BaseHTTPProvider):
             "model": target_model,
             "messages": messages,
             "stream": False,
+            "keep_alive": self.keep_alive,
         }
         if options:
             payload["options"] = options

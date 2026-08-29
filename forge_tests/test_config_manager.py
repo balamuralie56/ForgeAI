@@ -136,6 +136,19 @@ class TestConfigurationManager(unittest.TestCase):
         finally:
             del os.environ["FORGE_REQUEST_TIMEOUT"]
 
+    def test_keep_alive_environment_override(self) -> None:
+        """FORGE_KEEP_ALIVE should override models.keep_alive, letting users
+        tune how long Ollama keeps the model loaded between calls."""
+        os.environ["FORGE_KEEP_ALIVE"] = "-1"
+
+        try:
+            manager = ConfigurationManager(
+                config_path=str(self.config_file), defaults_path=str(self.defaults_file)
+            )
+            self.assertEqual(manager.get_model_settings().keep_alive, "-1")
+        finally:
+            del os.environ["FORGE_KEEP_ALIVE"]
+
     def test_save_configuration_public_api(self) -> None:
         """Issue 1 & 2: Tests saving via public API and standardized backup naming."""
         self.config_file.write_text("{}", encoding="utf-8")

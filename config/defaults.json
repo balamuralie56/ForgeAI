@@ -13,7 +13,8 @@
         "base_url": "http://localhost:11434",
         "temperature": 0.7,
         "max_tokens": 8192,
-        "request_timeout": 900.0
+        "request_timeout": 900.0,
+        "keep_alive": "30m"
     },
     "plugins": {
         "plugin_dir": "forge_plugins",

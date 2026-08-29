@@ -109,6 +109,7 @@ class TestOllamaProvider(unittest.TestCase):
         self.assertEqual(body_sent["prompt"], "Hello")
         self.assertEqual(body_sent["options"]["temperature"], 0.8)
         self.assertEqual(body_sent["options"]["num_predict"], 150)
+        self.assertEqual(body_sent["keep_alive"], "30m")
         self.assertNotIn("format", body_sent)
 
     @patch("urllib.request.urlopen")
@@ -129,6 +130,29 @@ class TestOllamaProvider(unittest.TestCase):
         args, _ = mock_urlopen.call_args
         body_sent = json.loads(args[0].data.decode("utf-8"))
         self.assertEqual(body_sent["format"], "json")
+
+    @patch("urllib.request.urlopen")
+    def test_generate_respects_custom_keep_alive(self, mock_urlopen) -> None:
+        """
+        keep_alive must be a top-level payload field (Ollama's API shape),
+        not nested under options - and must reflect whatever value the
+        provider was constructed with, not just the class default.
+        """
+        provider = OllamaProvider(
+            base_url="http://localhost:11434",
+            default_model="qwen-coder",
+            keep_alive="-1",
+        )
+        mock_urlopen.return_value = MockHTTPResponse(
+            json.dumps({"response": "hi"}).encode("utf-8")
+        )
+
+        provider.generate(prompt="Hello")
+
+        args, _ = mock_urlopen.call_args
+        body_sent = json.loads(args[0].data.decode("utf-8"))
+        self.assertEqual(body_sent["keep_alive"], "-1")
+        self.assertNotIn("keep_alive", body_sent.get("options", {}))
 
     @patch("urllib.request.urlopen")
     def test_generate_chat_success(self, mock_urlopen) -> None:
@@ -155,6 +179,7 @@ class TestOllamaProvider(unittest.TestCase):
 
         body_sent = json.loads(req.data.decode("utf-8"))
         self.assertEqual(body_sent["messages"], messages)
+        self.assertEqual(body_sent["keep_alive"], "30m")
         self.assertNotIn("format", body_sent)
 
     @patch("urllib.request.urlopen")

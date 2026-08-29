@@ -37,6 +37,11 @@ class ModelSettings:
     # single structured generation. 900s matches the developer stage's
     # WorkflowStage timeout, the largest of any pipeline stage.
     request_timeout: float = 900.0
+    # How long Ollama keeps the model loaded in memory after a call. Ollama's
+    # own default (5m) is shorter than the gap between this project's own
+    # sequential pipeline stages (measured 7-15min each), so every call past
+    # the first was paying a full model reload from disk on top of inference.
+    keep_alive: str = "30m"
 
     def __post_init__(self) -> None:
         if not (0.0 <= self.temperature <= 2.0):

@@ -54,6 +54,7 @@ class ModelRouter(ModelRouterService):
                 base_url=base_url,
                 default_model=default_model,
                 timeout=request_timeout,
+                keep_alive=settings.keep_alive,
             )
         else:
             # Fallback/default to OpenAI-compatible for any other configured provider (LM Studio, vLLM, etc.)
