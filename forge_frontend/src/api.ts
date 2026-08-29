@@ -3,6 +3,7 @@ import type {
   Diagnostics,
   FileContentResponse,
   FileListResponse,
+  ReportResponse,
   WorkflowStatus,
 } from "./types";
 
@@ -47,6 +48,8 @@ export const api = {
     request<FileContentResponse>(
       `/api/workflows/${id}/files/${encodeURIComponent(path)}`,
     ),
+
+  getReport: <T>(key: string) => request<ReportResponse<T>>(`/api/reports/${key}`),
 };
 
 export { ApiError };

@@ -21,6 +21,7 @@ from fastapi.testclient import TestClient
 
 from forge_api import bootstrap, runner
 from forge_core.kernel.kernel import ForgeAIKernel
+from forge_core.memory.service import MemoryService
 
 
 class TestForgeAPI(unittest.TestCase):
@@ -156,6 +157,30 @@ class TestForgeAPI(unittest.TestCase):
             content_resp = self.client.get(f"/api/workflows/{workflow_id}/files/app.py")
             self.assertEqual(content_resp.status_code, 200)
             self.assertIn("hello", content_resp.json()["content"])
+
+    # ─── Plugin reports ──────────────────────────────────────────────────────
+
+    def test_get_report_rejects_unknown_key(self) -> None:
+        response = self.client.get("/api/reports/not_a_real_report")
+        self.assertEqual(response.status_code, 404)
+
+    def test_get_report_404_when_not_yet_computed(self) -> None:
+        response = self.client.get("/api/reports/project_plan")
+        self.assertEqual(response.status_code, 404)
+
+    def test_get_report_returns_persisted_data(self) -> None:
+        memory = self.test_kernel.registry.resolve(MemoryService)  # type: ignore[type-abstract]
+        memory.project.set_metadata(
+            "security_report", {"project_id": "p1", "risk_score": 12.5, "findings": []}
+        )
+        try:
+            response = self.client.get("/api/reports/security_report")
+            self.assertEqual(response.status_code, 200)
+            body = response.json()
+            self.assertEqual(body["report"], "security_report")
+            self.assertEqual(body["data"]["risk_score"], 12.5)
+        finally:
+            memory.project.set_metadata("security_report", None)
 
     def test_file_path_traversal_is_rejected(self) -> None:
         with patch.object(runner, "start_workflow"):

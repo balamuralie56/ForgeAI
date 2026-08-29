@@ -18,6 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from forge_core.configuration.service import ConfigurationService
 from forge_core.event_bus.service import EventBusService
+from forge_core.memory.service import MemoryService
 from forge_core.workflow.service import WorkflowService
 from forge_core.workflow.models import WorkflowType
 from forge_core.version import __version__
@@ -32,10 +33,25 @@ from .schemas import (
     FileListResponse,
     FileEntry,
     FileContentResponse,
+    ReportResponse,
     DiagnosticsResponse,
 )
 
 logger = logging.getLogger("ForgeAI.API")
+
+# Every report a plugin persists to project memory, keyed exactly as each
+# plugin's service.py calls memory.project.set_metadata(key, ...). Explicit
+# allowlist so /api/reports/{key} can't be used to read arbitrary memory keys.
+_REPORT_KEYS = {
+    "project_plan",
+    "architecture_specification",
+    "implementation_report",
+    "test_report",
+    "documentation_report",
+    "security_report",
+    "review_report",
+    "git_report",
+}
 
 _broadcaster: Optional[EventBroadcaster] = None
 
@@ -75,6 +91,10 @@ def _workflow_service() -> WorkflowService:
 
 def _config_service() -> ConfigurationService:
     return bootstrap.get_kernel().registry.resolve(ConfigurationService)  # type: ignore[type-abstract]
+
+
+def _memory_service() -> MemoryService:
+    return bootstrap.get_kernel().registry.resolve(MemoryService)  # type: ignore[type-abstract]
 
 
 @app.get("/api/diagnostics", response_model=DiagnosticsResponse)
@@ -201,6 +221,27 @@ def get_workflow_file(workflow_id: str, file_path: str) -> FileContentResponse:
         raise HTTPException(status_code=500, detail=f"Failed to read file: {e}")
 
     return FileContentResponse(path=file_path, content=content)
+
+
+@app.get("/api/reports/{report_key}", response_model=ReportResponse)
+def get_report(report_key: str) -> ReportResponse:
+    """
+    Returns a plugin's latest structured report - the project plan, architecture
+    spec, test/security/review reports, etc. Each plugin already computes and
+    persists this; this just reads it back. Reports aren't namespaced per
+    workflow (project memory holds the most recent run's data only), matching
+    how every plugin service already persists them.
+    """
+    if report_key not in _REPORT_KEYS:
+        raise HTTPException(status_code=404, detail=f"Unknown report: {report_key}")
+
+    data = _memory_service().project.get_metadata(report_key)
+    if data is None:
+        raise HTTPException(
+            status_code=404, detail=f"Report '{report_key}' is not available yet."
+        )
+
+    return ReportResponse(report=report_key, data=data)
 
 
 @app.websocket("/ws/events")

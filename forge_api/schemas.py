@@ -71,6 +71,13 @@ class FileContentResponse(BaseModel):
     content: str
 
 
+class ReportResponse(BaseModel):
+    """A single plugin's latest structured report (plan, architecture, tests, etc.)."""
+
+    report: str
+    data: Dict[str, Any]
+
+
 class DiagnosticsResponse(BaseModel):
     """System diagnostics snapshot, mirroring `launcher.py --diagnostics`."""
 
