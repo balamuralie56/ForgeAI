@@ -16,7 +16,11 @@ from forge_core.configuration.service import ConfigurationService
 from forge_core.configuration.models import SystemSettings, ForgeConfig
 
 from forge_plugins.planner.models import ProjectPlan, ProjectGoal
-from forge_plugins.architect.models import ArchitectureSpecification
+from forge_plugins.architect.models import (
+    ArchitectureSpecification,
+    DatabaseSchema,
+    TechnologyDecision,
+)
 
 from forge_plugins.developer.service import ForgeAIDeveloper
 from forge_plugins.developer.exceptions import (
@@ -181,6 +185,84 @@ class TestDeveloperPlugin(unittest.TestCase):
         self.assertIsNotNone(runtime_report)
         self.assertIsNotNone(project_report)
         self.assertEqual(runtime_report["project_id"], "test-project-123")
+
+    def test_implement_project_templates_boilerplate_for_detected_python_stack(
+        self,
+    ) -> None:
+        """
+        When architecture.decisions confidently names a Python stack, the
+        dependency/environment/configuration steps must skip the LLM entirely
+        (3 fewer calls) and still produce correct files on disk - the mock
+        queue below only has responses for the 4 steps that still need one
+        (database, api, backend, frontend), so any of the templated steps
+        falling through to the LLM path would starve this queue and fail.
+        """
+        plan, _ = self._get_mock_plan_and_spec()
+        spec = ArchitectureSpecification(
+            project_id="test-project-123",
+            directory_structure="src/\n  main.py",
+            modules=[],
+            database_design=[
+                DatabaseSchema(table_name="users", columns={"id": "INTEGER"})
+            ],
+            decisions=[
+                TechnologyDecision(
+                    category="Backend",
+                    technology="Python / FastAPI",
+                    rationale="Async, typed, fast to scaffold",
+                )
+            ],
+            adrs=[],
+            mermaid_diagrams={},
+            rationale="Rationale",
+        )
+
+        mock_responses = [
+            ModelResponse(
+                text='{"files": [{"path": "schema.sql", "content": "CREATE TABLE users", "file_type": "database"}]}',
+                raw_response={},
+                model_name="mock-model",
+            ),
+            ModelResponse(
+                text='{"files": [{"path": "api.py", "content": "class Route", "file_type": "api"}]}',
+                raw_response={},
+                model_name="mock-model",
+            ),
+            ModelResponse(
+                text='{"files": [{"path": "main.py", "content": "import sys", "file_type": "backend"}]}',
+                raw_response={},
+                model_name="mock-model",
+            ),
+            ModelResponse(
+                text='{"files": [{"path": "index.html", "content": "<h1>Forge</h1>", "file_type": "frontend"}]}',
+                raw_response={},
+                model_name="mock-model",
+            ),
+        ]
+        self.mock_router.generate.side_effect = mock_responses
+
+        report = self.developer.implement_project(plan, spec)
+
+        # Only the 4 non-templatable steps should have called the LLM.
+        self.assertEqual(self.mock_router.generate.call_count, 4)
+
+        workspace_dir = Path(self.temp_workspace.name)
+        self.assertEqual(
+            (workspace_dir / "requirements.txt").read_text(encoding="utf-8").strip(),
+            "fastapi>=0.100.0\nuvicorn>=0.22.0\nsqlalchemy>=2.0.0\npydantic-settings>=2.0.0",
+        )
+        self.assertIn(
+            "DATABASE_URL", (workspace_dir / ".env.example").read_text(encoding="utf-8")
+        )
+        self.assertIn(
+            "pydantic_settings",
+            (workspace_dir / "src" / "config.py").read_text(encoding="utf-8"),
+        )
+        # LLM-produced files are untouched by templating.
+        self.assertTrue((workspace_dir / "schema.sql").exists())
+        self.assertTrue((workspace_dir / "api.py").exists())
+
+        self.assertEqual(report.status, "SUCCESS")
 
     def test_validation_missing_project_plan(self) -> None:
         """Verifies ValidationError is raised when ProjectPlan is invalid."""
