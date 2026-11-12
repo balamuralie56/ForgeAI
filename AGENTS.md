@@ -182,29 +182,29 @@ Never import implementation classes directly.
 
 Current Version
 
-v0.1.0
+v0.9.5
 
 Completed
 
-✔ Configuration Engine
+✔ Core Runtime — Kernel, Configuration, Logging, Event Bus, Memory, Plugin Manager, Task Engine (DAG scheduler/retry), Model Router (Ollama + OpenAI-compatible providers), Workflow Orchestrator (state machine, stage scheduler, crash recovery)
 
-✔ Logging Engine
+✔ All 8 AI Plugins — Planner, Architect, Developer, Tester, Documentation, Git, Security, Reviewer (each with service + models + components and a dedicated test suite)
 
-✔ Launcher
+✔ FastAPI Backend (`forge_api`) — REST + WebSocket API exposing diagnostics, workflow creation/status, file listing, and plugin reports
 
-✔ Workspace Bootstrap
+✔ React Frontend (`forge_frontend`) — multi-tab workbench consuming the real API/WebSocket stream
 
-✔ Unit Tests
+✔ Unit Tests — 323 tests across `forge_tests`, 100% passing
 
-✔ Boot Sequence
+✔ Git Repository / GitHub Repository / Documentation / Changelog
 
-✔ Git Repository
+Known, intentional gap
 
-✔ GitHub Repository
+- Reviewer Plugin's Liskov Substitution (L) check is explicitly unimplemented — it is documented in `forge_docs/ROADMAP.md` as needing cross-class contract analysis the current rule interface can't do. This is a deliberate scope boundary, not a stub.
 
-✔ Documentation
+Remaining roadmap item
 
-✔ Changelog
+- v1.0.0 "Production Release" — polishing the above into a shippable local platform. No CLI yet for triggering workflows outside the API/frontend; "Sprint 6+" items (distributed execution, model collaboration, self-improvement, plugin marketplace) are not started.
 
 Completed work must not be rewritten unless fixing an actual defect.
 
@@ -212,7 +212,7 @@ Completed work must not be rewritten unless fixing an actual defect.
 
 # 6. Sprint Roadmap
 
-Sprint 1
+Sprint 1 — Completed
 
 Configuration
 
@@ -222,7 +222,7 @@ Launcher
 
 Workspace
 
-Sprint 2
+Sprint 2 — Completed
 
 Kernel
 
@@ -234,7 +234,7 @@ Plugin Manager
 
 Model Router
 
-Sprint 3
+Sprint 3 — Completed
 
 Event Bus
 
@@ -242,13 +242,13 @@ Task Engine
 
 Memory Engine
 
-Sprint 4
+Sprint 4 — Completed
 
 Planner Plugin
 
 Architect Plugin
 
-Sprint 5
+Sprint 5 — Completed
 
 Developer Plugin
 
@@ -260,7 +260,19 @@ Git Plugin
 
 Security Plugin
 
-Sprint 6+
+Sprint 6-11 — Completed (beyond the original sketch above)
+
+Workflow Orchestrator (state machine, scheduler, crash recovery)
+
+Reviewer Plugin (code smells + SOLID scoring; Liskov check intentionally out of scope — see Section 5)
+
+FastAPI Backend (`forge_api`)
+
+React Frontend (`forge_frontend`)
+
+Remaining — Not Started
+
+v1.0.0 Production Release (the only item still planned)
 
 Optimization
 

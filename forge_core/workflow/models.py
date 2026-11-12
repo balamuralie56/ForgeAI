@@ -125,13 +125,9 @@ class Workflow:
 
     def _serialize_context(self) -> Dict[str, Any]:
         """Filters out non-JSON serializable details from the context."""
-        import unittest.mock
-
         serialized: Dict[str, Any] = {}
         for k, v in self.context.items():
-            if isinstance(v, unittest.mock.Mock):
-                serialized[k] = {"__mock__": True}
-            elif hasattr(v, "to_dict") and callable(getattr(v, "to_dict")):
+            if hasattr(v, "to_dict") and callable(getattr(v, "to_dict")):
                 serialized[k] = v.to_dict()
             elif isinstance(v, (str, int, float, bool, list, dict)) or v is None:
                 serialized[k] = v

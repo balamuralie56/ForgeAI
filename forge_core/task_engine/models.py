@@ -24,6 +24,20 @@ class TaskState(str, Enum):
     SKIPPED = "SKIPPED"
 
 
+@dataclass(frozen=True)
+class TaskSkipped:
+    """
+    Sentinel result a task's execution callable can return to signal that it
+    deliberately did not run (e.g. the task type has no real executor yet),
+    distinct from succeeding or failing.
+
+    Attributes:
+        reason (str): Human-readable explanation for why the task was skipped.
+    """
+
+    reason: str
+
+
 @dataclass
 class RetryPolicy:
     """

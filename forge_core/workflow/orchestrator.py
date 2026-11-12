@@ -459,115 +459,89 @@ class WorkflowOrchestrator:
     @staticmethod
     def reconstruct_context(context: Dict[str, Any]) -> Dict[str, Any]:
         """Reconstructs strongly typed models from dictionaries in the context."""
-        from unittest.mock import MagicMock
-
         reconstructed = dict(context)
 
         # 1. ProjectPlan
         if "project_plan" in reconstructed and isinstance(
             reconstructed["project_plan"], dict
         ):
-            if reconstructed["project_plan"].get("__mock__"):
-                reconstructed["project_plan"] = MagicMock()
-            else:
-                from forge_plugins.planner.models import ProjectPlan
+            from forge_plugins.planner.models import ProjectPlan
 
-                reconstructed["project_plan"] = ProjectPlan.from_dict(
-                    reconstructed["project_plan"]
-                )
+            reconstructed["project_plan"] = ProjectPlan.from_dict(
+                reconstructed["project_plan"]
+            )
 
         # 2. ArchitectureSpecification
         if "architecture_specification" in reconstructed and isinstance(
             reconstructed["architecture_specification"], dict
         ):
-            if reconstructed["architecture_specification"].get("__mock__"):
-                reconstructed["architecture_specification"] = MagicMock()
-            else:
-                from forge_plugins.architect.models import ArchitectureSpecification
+            from forge_plugins.architect.models import ArchitectureSpecification
 
-                reconstructed["architecture_specification"] = (
-                    ArchitectureSpecification.from_dict(
-                        reconstructed["architecture_specification"]
-                    )
+            reconstructed["architecture_specification"] = (
+                ArchitectureSpecification.from_dict(
+                    reconstructed["architecture_specification"]
                 )
+            )
 
         # 3. ImplementationReport
         if "implementation_report" in reconstructed and isinstance(
             reconstructed["implementation_report"], dict
         ):
-            if reconstructed["implementation_report"].get("__mock__"):
-                reconstructed["implementation_report"] = MagicMock()
-            else:
-                from forge_plugins.developer.models import ImplementationReport
+            from forge_plugins.developer.models import ImplementationReport
 
-                reconstructed["implementation_report"] = ImplementationReport.from_dict(
-                    reconstructed["implementation_report"]
-                )
+            reconstructed["implementation_report"] = ImplementationReport.from_dict(
+                reconstructed["implementation_report"]
+            )
 
         # 4. TestReport
         if "test_report" in reconstructed and isinstance(
             reconstructed["test_report"], dict
         ):
-            if reconstructed["test_report"].get("__mock__"):
-                reconstructed["test_report"] = MagicMock()
-            else:
-                from forge_plugins.tester.models import TestReport
+            from forge_plugins.tester.models import TestReport
 
-                reconstructed["test_report"] = TestReport.from_dict(
-                    reconstructed["test_report"]
-                )
+            reconstructed["test_report"] = TestReport.from_dict(
+                reconstructed["test_report"]
+            )
 
         # 5. DocumentationReport
         if "documentation_report" in reconstructed and isinstance(
             reconstructed["documentation_report"], dict
         ):
-            if reconstructed["documentation_report"].get("__mock__"):
-                reconstructed["documentation_report"] = MagicMock()
-            else:
-                from forge_plugins.documentation.models import DocumentationReport
+            from forge_plugins.documentation.models import DocumentationReport
 
-                reconstructed["documentation_report"] = DocumentationReport.from_dict(
-                    reconstructed["documentation_report"]
-                )
+            reconstructed["documentation_report"] = DocumentationReport.from_dict(
+                reconstructed["documentation_report"]
+            )
 
         # 6. SecurityReport
         if "security_report" in reconstructed and isinstance(
             reconstructed["security_report"], dict
         ):
-            if reconstructed["security_report"].get("__mock__"):
-                reconstructed["security_report"] = MagicMock()
-            else:
-                from forge_plugins.security.models import SecurityReport
+            from forge_plugins.security.models import SecurityReport
 
-                reconstructed["security_report"] = SecurityReport.from_dict(
-                    reconstructed["security_report"]
-                )
+            reconstructed["security_report"] = SecurityReport.from_dict(
+                reconstructed["security_report"]
+            )
 
         # 6b. ReviewReport
         if "review_report" in reconstructed and isinstance(
             reconstructed["review_report"], dict
         ):
-            if reconstructed["review_report"].get("__mock__"):
-                reconstructed["review_report"] = MagicMock()
-            else:
-                from forge_plugins.reviewer.models import ReviewReport
+            from forge_plugins.reviewer.models import ReviewReport
 
-                reconstructed["review_report"] = ReviewReport.from_dict(
-                    reconstructed["review_report"]
-                )
+            reconstructed["review_report"] = ReviewReport.from_dict(
+                reconstructed["review_report"]
+            )
 
         # 7. GitReport
         if "git_report" in reconstructed and isinstance(
             reconstructed["git_report"], dict
         ):
-            if reconstructed["git_report"].get("__mock__"):
-                reconstructed["git_report"] = MagicMock()
-            else:
-                from forge_plugins.git.models import GitReport
+            from forge_plugins.git.models import GitReport
 
-                reconstructed["git_report"] = GitReport.from_dict(
-                    reconstructed["git_report"]
-                )
+            reconstructed["git_report"] = GitReport.from_dict(
+                reconstructed["git_report"]
+            )
 
         return reconstructed
 

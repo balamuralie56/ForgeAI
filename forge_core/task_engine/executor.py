@@ -11,7 +11,7 @@ from typing import Any
 from forge_core.event_bus.interface import EventBus
 from forge_core.event_bus.models import Event
 from forge_core.memory.service import MemoryService
-from .models import Task, TaskState
+from .models import Task, TaskSkipped, TaskState
 from .retry import calculate_backoff
 
 logger = logging.getLogger("ForgeAI.TaskEngine.Executor")
@@ -81,6 +81,19 @@ class TaskExecutor:
                     )
                 else:
                     result = await execution_coro
+
+                # A callable can decline to run (e.g. an unimplemented task
+                # type) by returning TaskSkipped instead of raising - this is
+                # neither success nor failure, so it gets its own state.
+                if isinstance(result, TaskSkipped):
+                    task.result = result
+                    task.update_state(TaskState.SKIPPED)
+                    self._memory.runtime.remove_active_task(task.id)
+                    self._publish_event("task.skipped", task)
+                    logger.warning(
+                        f"Task '{task.id}' [{task.name}] skipped: {result.reason}"
+                    )
+                    return result
 
                 # Success path
                 task.result = result

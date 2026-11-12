@@ -7,7 +7,7 @@ import logging
 from pathlib import Path
 from typing import List
 
-from forge_plugins.planner.service import parse_json_response
+from forge_plugins.planner.service import parse_json_response, strip_code_fence
 from forge_plugins.developer.models import GeneratedFile
 from forge_plugins.developer.exceptions import DeveloperInferenceError
 from forge_plugins.developer.utils.pipeline import ImplementationContext
@@ -78,7 +78,7 @@ def load_prompt_and_generate(
             generated_files.append(
                 GeneratedFile(
                     path=item.get("path", ""),
-                    content=item.get("content", ""),
+                    content=strip_code_fence(item.get("content", "")),
                     file_type=item_type,
                 )
             )

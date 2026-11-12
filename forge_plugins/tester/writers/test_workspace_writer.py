@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional
 from forge_core.event_bus.models import Event
 from forge_core.event_bus.service import EventBusService
 from forge_core.model_router.service import ModelRouterService
+from forge_plugins.planner.service import strip_code_fence
 from forge_plugins.tester.exceptions import TesterWriteError
 from forge_plugins.tester.models import GeneratedTestFile
 
@@ -162,21 +163,7 @@ class TestWorkspaceWriter:
             )
 
             response = model_router.generate(prompt)
-            merged_code = response.text.strip()
-
-            # Clean markdown wraps from response
-            if merged_code.startswith("```"):
-                lines = merged_code.splitlines()
-                if len(lines) >= 2:
-                    # Remove first line if it starts with ```
-                    if lines[0].startswith("```"):
-                        lines = lines[1:]
-                    # Remove last line if it is ```
-                    if lines[-1].strip() == "```":
-                        lines = lines[:-1]
-                    merged_code = "\n".join(lines).strip()
-
-            return merged_code
+            return strip_code_fence(response.text.strip())
         except Exception as e:
             logger.warning(f"Error merging test files: {e}. Falling back to override.")
             return new_code

@@ -109,7 +109,7 @@ class WorkflowBuilder:
         # Lazy imports and resolutions
         from forge_plugins.planner.service import (
             execute_architecture_task,
-            execute_placeholder_task,
+            execute_unimplemented_task,
         )
 
         engine_tasks: List[EngineTask] = []
@@ -130,13 +130,13 @@ class WorkflowBuilder:
                 callable_wrapper = make_arch_callable(plan_dict, self._registry)
             else:
 
-                def make_placeholder_callable(t_id: str) -> Any:
+                def make_unimplemented_callable(t_id: str) -> Any:
                     def _run(task_obj: Any = None) -> Any:
-                        return execute_placeholder_task(t_id)
+                        return execute_unimplemented_task(t_id)
 
                     return _run
 
-                callable_wrapper = make_placeholder_callable(task.task_id)
+                callable_wrapper = make_unimplemented_callable(task.task_id)
 
             engine_task = EngineTask(
                 task_id=task.task_id,

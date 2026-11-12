@@ -14,6 +14,7 @@ from forge_core.event_bus.service import EventBusService
 from forge_core.event_bus.models import Event
 from forge_core.memory.service import MemoryService
 from forge_core.task_engine.service import TaskEngineService
+from forge_core.task_engine.models import TaskSkipped
 
 from .models import ProjectPlan
 from .exceptions import PlanningInferenceError
@@ -99,10 +100,47 @@ def parse_json_response(text: str) -> Dict[str, Any]:
     )
 
 
-def execute_placeholder_task(task_id: str) -> Dict[str, Any]:
-    """Placeholder execution handler for planned tasks."""
-    logger.info(f"[Task Execution] Processing placeholder task: {task_id}")
-    return {"status": "SUCCESS", "task_id": task_id}
+def strip_code_fence(text: str) -> str:
+    """
+    Strips a single leading/trailing markdown code fence (e.g. ```python ... ```)
+    from a string.
+
+    Local models sometimes wrap a generated file's content in a fence even
+    though that content is itself the value of a JSON string field - a fence
+    embedded like that is invisible to parse_json_response's outer-fence
+    handling (which only strips a fence wrapping the *entire* response), so
+    it survives straight into the written file and breaks on syntax. Leaves
+    text untouched if it isn't fenced.
+
+    Args:
+        text (str): Candidate file content, possibly fenced.
+
+    Returns:
+        str: The content with a single wrapping fence removed, if present.
+    """
+    stripped = text.strip()
+    if not stripped.startswith("```"):
+        return text
+
+    lines = stripped.splitlines()
+    if lines and lines[0].startswith("```"):
+        lines = lines[1:]
+    if lines and lines[-1].strip() == "```":
+        lines = lines[:-1]
+    return "\n".join(lines).strip("\n")
+
+
+def execute_unimplemented_task(task_id: str) -> TaskSkipped:
+    """
+    Execution handler for planned tasks that have no real executor wired up
+    yet. Only the task auto-triggering the Architect plugin is implemented
+    today; every other plan task is explicitly skipped rather than reported
+    as having succeeded, so callers can tell "ran" apart from "not wired up".
+    """
+    logger.warning(f"[Task Execution] No executor implemented for task: {task_id}")
+    return TaskSkipped(
+        reason=f"No execution handler is implemented for task '{task_id}' yet."
+    )
 
 
 def execute_architecture_task(

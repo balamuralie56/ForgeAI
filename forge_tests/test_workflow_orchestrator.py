@@ -1,6 +1,7 @@
 import unittest
 import time
 import tempfile
+from typing import Any, Dict, Optional
 from unittest.mock import MagicMock
 from pathlib import Path
 
@@ -33,6 +34,18 @@ from forge_plugins.documentation.service import DocumentationService
 from forge_plugins.git.service import GitService
 from forge_plugins.security.service import SecurityService
 from forge_plugins.reviewer.service import ReviewerService
+
+
+def make_report_mock(data: Optional[Dict[str, Any]] = None) -> MagicMock:
+    """
+    Builds a MagicMock standing in for a plugin's report/plan/spec return
+    value, with a real `to_dict()` so it round-trips through workflow
+    persistence (JSON) like a genuine model would - production code is not
+    expected to special-case test doubles.
+    """
+    mock = MagicMock()
+    mock.to_dict.return_value = data if data is not None else {}
+    return mock
 
 
 class TestWorkflowOrchestrator(unittest.TestCase):
@@ -112,14 +125,14 @@ class TestWorkflowOrchestrator(unittest.TestCase):
 
     def test_full_engineering_workflow_success(self) -> None:
         """Verifies successful end-to-end execution of a full engineering workflow."""
-        mock_plan = MagicMock()
-        mock_spec = MagicMock()
-        mock_dev_report = MagicMock()
-        mock_test_report = MagicMock()
-        mock_doc_report = MagicMock()
-        mock_security_report = MagicMock()
-        mock_review_report = MagicMock()
-        mock_git_report = MagicMock()
+        mock_plan = make_report_mock()
+        mock_spec = make_report_mock()
+        mock_dev_report = make_report_mock()
+        mock_test_report = make_report_mock()
+        mock_doc_report = make_report_mock()
+        mock_security_report = make_report_mock()
+        mock_review_report = make_report_mock()
+        mock_git_report = make_report_mock()
 
         self.mock_planner.plan_project.return_value = mock_plan
         self.mock_architect.design_architecture.return_value = mock_spec
@@ -205,8 +218,8 @@ class TestWorkflowOrchestrator(unittest.TestCase):
             custom_stages=[stage1, stage2],
         )
 
-        mock_plan = MagicMock()
-        mock_spec = MagicMock()
+        mock_plan = make_report_mock()
+        mock_spec = make_report_mock()
         self.mock_planner.plan_project.return_value = mock_plan
         self.mock_architect.design_architecture.return_value = mock_spec
 
@@ -261,7 +274,7 @@ class TestWorkflowOrchestrator(unittest.TestCase):
             custom_stages=[stage1, stage2],
         )
 
-        mock_plan = MagicMock()
+        mock_plan = make_report_mock()
         self.mock_planner.plan_project.return_value = mock_plan
         self.mock_documentation.document_project.side_effect = Exception(
             "Doc writer fail"
@@ -316,7 +329,7 @@ class TestWorkflowOrchestrator(unittest.TestCase):
 
         def slow_action(*args, **kwargs):
             time.sleep(0.1)
-            return MagicMock()
+            return make_report_mock()
 
         self.mock_planner.plan_project.side_effect = slow_action
 
@@ -339,7 +352,7 @@ class TestWorkflowOrchestrator(unittest.TestCase):
             observed_status["status"] = (
                 reloaded.stages[0].status.value if reloaded else None
             )
-            return MagicMock()
+            return make_report_mock()
 
         self.mock_planner.plan_project.side_effect = check_persisted_state_mid_call
 

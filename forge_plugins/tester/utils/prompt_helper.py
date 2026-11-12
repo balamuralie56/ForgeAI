@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import List
 
 from forge_core.event_bus.models import Event
-from forge_plugins.planner.service import parse_json_response
+from forge_plugins.planner.service import parse_json_response, strip_code_fence
 from forge_plugins.tester.models import GeneratedTestFile
 from forge_plugins.tester.exceptions import TestingInferenceError
 from forge_plugins.tester.utils.test_pipeline import TestContext
@@ -79,7 +79,7 @@ def load_prompt_and_generate(
             generated_files.append(
                 GeneratedTestFile(
                     path=item.get("path", ""),
-                    content=item.get("content", ""),
+                    content=strip_code_fence(item.get("content", "")),
                     test_type=item_type,
                 )
             )
