@@ -74,6 +74,44 @@ export interface ReportResponse<T> {
   data: T;
 }
 
+export interface RunSummary {
+  workflow_id: string;
+  name: string;
+  goal: string;
+  workflow_type: string;
+  state: string;
+  progress: number;
+  model: string;
+  created_at: number;
+  updated_at: number;
+}
+
+export interface RunListResponse {
+  runs: RunSummary[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface RunDetail extends RunSummary {
+  stages: Partial<StageStatus>[];
+  errors: Record<string, string>;
+  artifact_kinds: string[];
+}
+
+export interface RunArtifactResponse<T> {
+  workflow_id: string;
+  kind: string;
+  data: T;
+}
+
+export interface StorageUsage {
+  history_database_bytes: number;
+  run_count: number;
+  artifact_bytes_by_run: Record<string, number>;
+  workspace_bytes: number;
+}
+
 // planner
 export interface ProjectGoal {
   goal: string;

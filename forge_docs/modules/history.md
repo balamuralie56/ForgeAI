@@ -43,7 +43,13 @@ print(history.storage_usage().database_bytes)
 | `DELETE /api/history/runs/{id}` | Deletes the run, its reports, and its workflow state in Project Memory. `409` if it is still running |
 | `GET /api/history/storage` | History database size, per-run report sizes, and workspace size |
 
+## Frontend
+The React UI has a **History** sidebar listing every recorded run (goal, state, progress, time, model). Selecting a run opens it in the workbench: every report tab reads that run's own stored copy through `GET /api/history/runs/{id}/artifacts/{kind}`, so an older run never shows a newer run's data. Each run can be deleted (two-step confirm; disabled while it is running), and the footer shows how much storage saved runs and generated files use.
+
+Report text is rendered defensively: if a local model returns an object where the schema promises a string, the UI shows it as text, and an error boundary keeps one bad tab from blanking the app.
+
 ## Known limits
 - Runs recorded before this engine existed are not imported.
+- The Files tab shows the shared workspace, so for an older run it may include files from a later run (the UI says so).
 - Generated files are **not** deleted with a run: every run currently writes into the one shared `forge_workspace/`, so files cannot be attributed to a single run.
 - Only plugin reports and run state are stored. Chat conversations are a planned follow-up.

@@ -4,6 +4,10 @@ import type {
   FileContentResponse,
   FileListResponse,
   ReportResponse,
+  RunArtifactResponse,
+  RunDetail,
+  RunListResponse,
+  StorageUsage,
   WorkflowStatus,
 } from "./types";
 
@@ -50,6 +54,21 @@ export const api = {
     ),
 
   getReport: <T>(key: string) => request<ReportResponse<T>>(`/api/reports/${key}`),
+
+  listRuns: (limit = 50, offset = 0) =>
+    request<RunListResponse>(`/api/history/runs?limit=${limit}&offset=${offset}`),
+
+  getRun: (id: string) => request<RunDetail>(`/api/history/runs/${id}`),
+
+  getRunArtifact: <T>(id: string, kind: string) =>
+    request<RunArtifactResponse<T>>(`/api/history/runs/${id}/artifacts/${kind}`),
+
+  deleteRun: (id: string) =>
+    request<{ workflow_id: string; deleted: boolean }>(`/api/history/runs/${id}`, {
+      method: "DELETE",
+    }),
+
+  getStorage: () => request<StorageUsage>("/api/history/storage"),
 };
 
 export { ApiError };

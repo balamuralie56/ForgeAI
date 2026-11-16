@@ -186,7 +186,7 @@ v0.9.5
 
 Completed
 
-✔ Core Runtime — Kernel, Configuration, Logging, Event Bus, Memory, Plugin Manager, Task Engine (DAG scheduler/retry), History Engine (per-run workflow and report history, API only so far), Model Router (Ollama + OpenAI-compatible providers), Workflow Orchestrator (state machine, stage scheduler, crash recovery)
+✔ Core Runtime — Kernel, Configuration, Logging, Event Bus, Memory, Plugin Manager, Task Engine (DAG scheduler/retry), History Engine (per-run workflow and report history, shown in the React UI sidebar), Model Router (Ollama + OpenAI-compatible providers), Workflow Orchestrator (state machine, stage scheduler, crash recovery)
 
 ✔ All 8 AI Plugins — Planner, Architect, Developer, Tester, Documentation, Git, Security, Reviewer (each with service + models + components and a dedicated test suite)
 

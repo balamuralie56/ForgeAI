@@ -95,7 +95,7 @@ The **FastAPI backend** (`forge_api`) sits on top of the same Kernel/Service Reg
 - **Event Bus:** Decoupled, thread-safe synchronous and asynchronous event publishing/routing.
 - **Memory Engine:** Ephemeral in-memory state (Runtime Memory) and durable persistent records (Project Memory) backed by local SQLite.
 - **Task Engine:** Runs task pipelines as Directed Acyclic Graphs (DAGs), with timeouts, exponential backoff retries, and cascading skips on failure.
-- **History Engine:** Keeps a per-run record of every workflow and the reports it produced in its own SQLite database, so earlier runs are no longer overwritten by later ones. Exposed through `/api/history/*` (list, open, delete, storage usage) — see [history.md](forge_docs/modules/history.md). The React UI does not show it yet.
+- **History Engine:** Keeps a per-run record of every workflow and the reports it produced in its own SQLite database, so earlier runs are no longer overwritten by later ones. Exposed through `/api/history/*` (list, open, delete, storage usage) — see [history.md](forge_docs/modules/history.md). The React UI shows it in a History sidebar: reopen or delete past runs and see storage used.
 - **Workflow Orchestrator:** Sequences plugin stages (e.g. Planner → Architect → Developer) into a named `WorkflowType`, persisting state so a run can resume after interruption.
 
 ### AI Plugins

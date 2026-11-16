@@ -240,15 +240,22 @@ class WorkflowOrchestrator:
         workflow_dict: Optional[Dict[str, Any]] = None
         try:
             workflow_dict = workflow.to_dict()
+        except Exception as e:
+            logger.error(f"Failed to serialize workflow '{workflow.id}': {e}")
+            return
+
+        # History is recorded before the status becomes visible through project
+        # memory, so a client that sees a stage as completed can always read that
+        # stage's report from history straight away.
+        self._record_history(workflow.id, workflow_dict)
+
+        try:
             self._memory.project.set_metadata(f"workflow:{workflow.id}", workflow_dict)
             self._memory.runtime.set_project_state(
                 f"workflow:{workflow.id}", workflow_dict
             )
         except Exception as e:
             logger.error(f"Failed to persist workflow '{workflow.id}' to memory: {e}")
-
-        if workflow_dict is not None:
-            self._record_history(workflow.id, workflow_dict)
 
     def _record_history(self, workflow_id: str, workflow_dict: Dict[str, Any]) -> None:
         """Mirrors a workflow snapshot into the History Engine, if one is registered."""

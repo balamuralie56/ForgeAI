@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { api, ApiError } from "./api";
+import { RunContext } from "./runContext";
 
 export type ReportState<T> =
   | { status: "idle" }
@@ -9,23 +10,29 @@ export type ReportState<T> =
   | { status: "error"; message: string };
 
 /**
- * Fetches a plugin report (GET /api/reports/{key}) once `enabled` flips true
- * (typically once that stage completes) and refetches whenever `refreshKey`
- * changes - a 404 means "not computed yet", not a real error.
+ * Fetches a plugin report once `enabled` flips true (typically once that stage
+ * completes) and refetches whenever `refreshKey` or the selected run changes.
+ * When a run is selected the report comes from that run's own stored copy
+ * (GET /api/history/runs/{id}/artifacts/{key}), so opening an older run never
+ * shows a newer run's data; with no run selected it falls back to the latest
+ * report (GET /api/reports/{key}). A 404 means "not computed yet", not an error.
  */
 export function useReport<T>(
   key: string,
   enabled: boolean,
   refreshKey: unknown = null,
 ): ReportState<T> {
+  const runId = useContext(RunContext);
   const [state, setState] = useState<ReportState<T>>({ status: "idle" });
 
   useEffect(() => {
     if (!enabled) return;
     let cancelled = false;
     setState({ status: "loading" });
-    api
-      .getReport<T>(key)
+    const request = runId
+      ? api.getRunArtifact<T>(runId, key)
+      : api.getReport<T>(key);
+    request
       .then((res) => !cancelled && setState({ status: "ready", data: res.data }))
       .catch((e) => {
         if (cancelled) return;
@@ -42,7 +49,7 @@ export function useReport<T>(
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, enabled, refreshKey]);
+  }, [key, enabled, refreshKey, runId]);
 
   return state;
 }

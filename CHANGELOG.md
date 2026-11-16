@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased] - Phase 1 Active Development
 
 ### Fixed
+- **Workflow history ordering:** the orchestrator now records a run in history before its status becomes visible in project memory, so a client that sees a stage as completed can always read that stage's report.
 - **Python 3.14 compatibility:** Removed dead-code fallback branches in three Security Plugin rules that matched on `ast.Str`/`ast.NameConstant`, deprecated node types the parser hasn't produced since Python 3.8 and which the `ast` module removes entirely in 3.14.
 - **Secrets:** The Git plugin's GitHub PAT can now be supplied via the `FORGE_GITHUB_TOKEN` environment variable instead of only `forge.json`.
 - **Repo hygiene:** Repaired a corrupted, duplicated `.gitignore`; added the missing `LICENSE` (MIT) and an `.env.example` documenting all `FORGE_*` overrides.
@@ -15,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **History Engine:** New `forge_core/history` package with a `HistoryService` (registered in the Kernel) backed by a dedicated `forge_history.db`. Every workflow run now keeps its own copy of each plugin report, so a later run no longer overwrites an earlier one. Captured by the `WorkflowOrchestrator` whenever it persists workflow state; skipped when no history service is registered, and a history failure never fails a workflow.
 - **History API:** `GET /api/history/runs`, `GET /api/history/runs/{id}`, `GET /api/history/runs/{id}/artifacts/{kind}`, `DELETE /api/history/runs/{id}` (refuses runs still in progress), and `GET /api/history/storage`.
+- **History sidebar (frontend):** reopen or delete past runs, see storage used, and view any run's own reports in the existing tabs. Report text is rendered defensively and a per-tab error boundary stops an unexpected report shape from blanking the app (found when `qwen2.5-coder:3b` returned table columns as `{type, description}` objects).
 - **Project Memory:** `ProjectMemory.delete_metadata()` to remove a stored key.
 - **Security Plugin:** Implemented dynamic Security plugin checking python files for AST vulnerabilities (eval, exec, shell commands, pickling, weak crypto, temp files, hardcoded passwords, SQL injection), checking requirements.txt for CVE dependencies, and scanning for copyleft licenses.
 - **SARIF Standard Export:** Formatted reports to industry-standard SARIF JSON reports, alongside markdown and standard report JSON deliverables.

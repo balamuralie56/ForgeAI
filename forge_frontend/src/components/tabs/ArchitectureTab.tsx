@@ -1,6 +1,7 @@
 import { useReport } from "../../useReport";
 import { ReportGate } from "../ReportGate";
 import { MermaidDiagram } from "../MermaidDiagram";
+import { toText } from "../../format";
 import type { ArchitectureSpecification } from "../../types";
 
 export function ArchitectureTab({ enabled }: { enabled: boolean }) {
@@ -14,7 +15,7 @@ export function ArchitectureTab({ enabled }: { enabled: boolean }) {
             {spec.rationale && (
               <section className="arch__section">
                 <h3>Rationale</h3>
-                <p>{spec.rationale}</p>
+                <p>{toText(spec.rationale)}</p>
               </section>
             )}
 
@@ -24,9 +25,9 @@ export function ArchitectureTab({ enabled }: { enabled: boolean }) {
                 <div className="decision-grid">
                   {spec.decisions.map((d, i) => (
                     <div key={i} className="decision-card">
-                      <div className="decision-card__category">{d.category}</div>
-                      <div className="decision-card__tech">{d.technology}</div>
-                      <div className="decision-card__rationale">{d.rationale}</div>
+                      <div className="decision-card__category">{toText(d.category)}</div>
+                      <div className="decision-card__tech">{toText(d.technology)}</div>
+                      <div className="decision-card__rationale">{toText(d.rationale)}</div>
                     </div>
                   ))}
                 </div>
@@ -36,7 +37,7 @@ export function ArchitectureTab({ enabled }: { enabled: boolean }) {
             {spec.directory_structure && (
               <section className="arch__section">
                 <h3>Directory structure</h3>
-                <pre className="arch__tree">{spec.directory_structure}</pre>
+                <pre className="arch__tree">{toText(spec.directory_structure)}</pre>
               </section>
             )}
 
@@ -46,20 +47,20 @@ export function ArchitectureTab({ enabled }: { enabled: boolean }) {
                 {spec.modules.map((m) => (
                   <div key={m.name} className="module-card">
                     <div className="module-card__header">
-                      <span className="module-card__name">{m.name}</span>
+                      <span className="module-card__name">{toText(m.name)}</span>
                       {m.dependencies.length > 0 && (
                         <span className="module-card__deps">depends on {m.dependencies.join(", ")}</span>
                       )}
                     </div>
-                    <p className="module-card__purpose">{m.purpose}</p>
+                    <p className="module-card__purpose">{toText(m.purpose)}</p>
                     {m.apis.length > 0 && (
                       <table className="api-table">
                         <tbody>
                           {m.apis.map((a, i) => (
                             <tr key={i}>
-                              <td className="api-table__method">{a.method}</td>
-                              <td className="api-table__path">{a.path}</td>
-                              <td className="api-table__desc">{a.description}</td>
+                              <td className="api-table__method">{toText(a.method)}</td>
+                              <td className="api-table__path">{toText(a.path)}</td>
+                              <td className="api-table__desc">{toText(a.description)}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -75,8 +76,8 @@ export function ArchitectureTab({ enabled }: { enabled: boolean }) {
                 <h3>Database schema</h3>
                 {spec.database_design.map((t) => (
                   <div key={t.table_name} className="table-card">
-                    <div className="table-card__name">{t.table_name}</div>
-                    {t.description && <p className="table-card__desc">{t.description}</p>}
+                    <div className="table-card__name">{toText(t.table_name)}</div>
+                    {t.description && <p className="table-card__desc">{toText(t.description)}</p>}
                     <table className="columns-table">
                       <tbody>
                         {Object.entries(t.columns).map(([col, type]) => (
@@ -85,7 +86,7 @@ export function ArchitectureTab({ enabled }: { enabled: boolean }) {
                               {col}
                               {t.primary_key === col && <span className="columns-table__pk">PK</span>}
                             </td>
-                            <td className="columns-table__type">{type}</td>
+                            <td className="columns-table__type">{toText(type)}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -99,7 +100,7 @@ export function ArchitectureTab({ enabled }: { enabled: boolean }) {
               <section className="arch__section">
                 <h3>Diagrams</h3>
                 {Object.entries(spec.mermaid_diagrams).map(([title, def]) => (
-                  <MermaidDiagram key={title} title={title} definition={def} />
+                  <MermaidDiagram key={title} title={title} definition={toText(def)} />
                 ))}
               </section>
             )}
@@ -111,18 +112,18 @@ export function ArchitectureTab({ enabled }: { enabled: boolean }) {
                   <details key={adr.adr_id} className="adr">
                     <summary>
                       <span className="adr__id">{adr.adr_id}</span>
-                      {adr.title}
-                      <span className="adr__status">{adr.status}</span>
+                      {toText(adr.title)}
+                      <span className="adr__status">{toText(adr.status)}</span>
                     </summary>
                     <div className="adr__body">
                       <p>
-                        <strong>Context:</strong> {adr.context}
+                        <strong>Context:</strong> {toText(adr.context)}
                       </p>
                       <p>
-                        <strong>Decision:</strong> {adr.decision}
+                        <strong>Decision:</strong> {toText(adr.decision)}
                       </p>
                       <p>
-                        <strong>Consequences:</strong> {adr.consequences}
+                        <strong>Consequences:</strong> {toText(adr.consequences)}
                       </p>
                     </div>
                   </details>

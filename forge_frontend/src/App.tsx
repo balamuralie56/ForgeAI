@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { StatusBar } from "./components/StatusBar";
+import { HistorySidebar } from "./components/HistorySidebar";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import { PipelineView } from "./components/PipelineView";
 import { EventLog } from "./components/EventLog";
 import { Tabs } from "./components/Tabs";
@@ -14,8 +16,9 @@ import { SecurityTab } from "./components/tabs/SecurityTab";
 import { ReviewTab } from "./components/tabs/ReviewTab";
 import { GitTab } from "./components/tabs/GitTab";
 import { api, ApiError } from "./api";
+import { RunContext } from "./runContext";
 import { useEventStream } from "./useEventStream";
-import type { StageStatus, WorkflowStatus } from "./types";
+import type { RunDetail, StageStatus, WorkflowStatus } from "./types";
 import "./App.css";
 
 const ACTIVE_STATES = new Set(["PENDING", "RUNNING", "WAITING"]);
@@ -24,23 +27,51 @@ function findStage(workflow: WorkflowStatus | null, name: string): StageStatus |
   return workflow?.stages.find((s) => s.name === name);
 }
 
+function toWorkflowStatus(run: RunDetail): WorkflowStatus {
+  return {
+    id: run.workflow_id,
+    name: run.name,
+    type: run.workflow_type,
+    state: run.state,
+    progress: run.progress,
+    stages: run.stages.map((s) => ({
+      name: s.name ?? "",
+      status: s.status ?? "PENDING",
+      started_at: s.started_at ?? null,
+      completed_at: s.completed_at ?? null,
+      error: s.error ?? null,
+      optional: s.optional ?? false,
+      critical: s.critical ?? true,
+    })),
+    errors: run.errors,
+    created_at: run.created_at,
+    updated_at: run.updated_at,
+  };
+}
+
 function App() {
   const { connectionState, log } = useEventStream();
   const [workflow, setWorkflow] = useState<WorkflowStatus | null>(null);
+  const [openedFromHistory, setOpenedFromHistory] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("overview");
   const pollRef = useRef<number | undefined>(undefined);
+  const currentIdRef = useRef<string | null>(null);
 
   const pollStatus = useCallback(function poll(id: string) {
     api
       .getWorkflow(id)
       .then((status) => {
+        // The user may have opened a different run while this request was in flight.
+        if (currentIdRef.current !== id) return;
         setWorkflow(status);
         if (ACTIVE_STATES.has(status.state)) {
           pollRef.current = window.setTimeout(() => poll(id), 1500);
         }
       })
-      .catch((e) => setError(e instanceof ApiError ? e.message : String(e)));
+      .catch((e) => {
+        if (currentIdRef.current === id) setError(e instanceof ApiError ? e.message : String(e));
+      });
   }, []);
 
   useEffect(() => () => window.clearTimeout(pollRef.current), []);
@@ -50,10 +81,45 @@ function App() {
     api
       .createWorkflow(goal)
       .then((res) => {
+        window.clearTimeout(pollRef.current);
+        currentIdRef.current = res.workflow_id;
+        setOpenedFromHistory(false);
         setActiveTab("overview");
         pollStatus(res.workflow_id);
       })
       .catch((e) => setError(e instanceof ApiError ? e.message : String(e)));
+  };
+
+  const selectRun = (id: string) => {
+    window.clearTimeout(pollRef.current);
+    currentIdRef.current = id;
+    setError(null);
+    api
+      .getRun(id)
+      .then((run) => {
+        if (currentIdRef.current !== id) return;
+        const status = toWorkflowStatus(run);
+        setWorkflow(status);
+        setOpenedFromHistory(true);
+        setActiveTab("overview");
+        if (ACTIVE_STATES.has(status.state)) pollStatus(id);
+      })
+      .catch((e) => {
+        if (currentIdRef.current === id) setError(e instanceof ApiError ? e.message : String(e));
+      });
+  };
+
+  const newBuild = () => {
+    window.clearTimeout(pollRef.current);
+    currentIdRef.current = null;
+    setWorkflow(null);
+    setOpenedFromHistory(false);
+    setError(null);
+    setActiveTab("overview");
+  };
+
+  const handleDeleted = (id: string) => {
+    if (id === currentIdRef.current) newBuild();
   };
 
   const isRunning = workflow ? ACTIVE_STATES.has(workflow.state) : false;
@@ -83,45 +149,67 @@ function App() {
     <div className="app">
       <StatusBar connectionState={connectionState} />
 
-      <main className="app__main">
-        {error && <div className="app__error">{error}</div>}
+      <div className="app__body">
+        <HistorySidebar
+          selectedId={workflow?.id ?? null}
+          refreshKey={`${workflow?.id}|${workflow?.state}|${workflow?.progress}`}
+          onSelect={selectRun}
+          onNew={newBuild}
+          onDeleted={handleDeleted}
+        />
 
-        {workflow && (
-          <section className="app__pipeline">
-            <PipelineView workflow={workflow} />
-          </section>
-        )}
+        <RunContext.Provider value={workflow?.id ?? null}>
+          <main className="app__main">
+            {error && <div className="app__error">{error}</div>}
 
-        <section className="app__workbench">
-          <Tabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
-
-          <div className="app__tab-body">
-            {activeTab === "overview" && (
-              <OverviewTab workflow={workflow} isRunning={isRunning} onSubmit={startWorkflow} />
+            {workflow && (
+              <section className="app__pipeline">
+                <PipelineView workflow={workflow} />
+              </section>
             )}
-            {activeTab === "plan" && <PlanTab enabled={isDone("planner")} />}
-            {activeTab === "architecture" && <ArchitectureTab enabled={isDone("architect")} />}
-            {activeTab === "files" && workflow && (
-              <FilesTab workflowId={workflow.id} isActive={isRunning} />
-            )}
-            {activeTab === "files" && !workflow && (
-              <div className="tab-panel report-gate__empty">
-                Files appear here once a build starts.
+
+            <section className="app__workbench">
+              <Tabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
+
+              <div className="app__tab-body">
+                <ErrorBoundary key={`${activeTab}|${workflow?.id}`}>
+                  {activeTab === "overview" && (
+                    <OverviewTab workflow={workflow} isRunning={isRunning} onSubmit={startWorkflow} />
+                  )}
+                  {activeTab === "plan" && <PlanTab enabled={isDone("planner")} />}
+                  {activeTab === "architecture" && <ArchitectureTab enabled={isDone("architect")} />}
+                  {activeTab === "files" && workflow && (
+                    <>
+                      {openedFromHistory && (
+                        <div className="app__note">
+                          Generated files are shared by all runs, so this shows the current workspace,
+                          which may include files from a later run.
+                        </div>
+                      )}
+                      <FilesTab workflowId={workflow.id} isActive={isRunning} />
+                    </>
+                  )}
+                  {activeTab === "files" && !workflow && (
+                    <div className="tab-panel report-gate__empty">
+                      Files appear here once a build starts.
+                    </div>
+                  )}
+                  {activeTab === "tests" && <TestsTab enabled={isDone("tester")} />}
+                  {activeTab === "docs" && <DocumentationTab enabled={isDone("documentation")} />}
+                  {activeTab === "security" && <SecurityTab enabled={isDone("security")} />}
+                  {activeTab === "review" && <ReviewTab enabled={isDone("reviewer")} />}
+                  {activeTab === "git" && <GitTab enabled={isDone("git")} />}
+                  {activeTab === "activity" && (
+                    <div className="tab-panel tab-panel--activity">
+                      <EventLog events={log} />
+                    </div>
+                  )}
+                </ErrorBoundary>
               </div>
-            )}
-            {activeTab === "tests" && <TestsTab enabled={isDone("tester")} />}
-            {activeTab === "docs" && <DocumentationTab enabled={isDone("documentation")} />}
-            {activeTab === "security" && <SecurityTab enabled={isDone("security")} />}
-            {activeTab === "review" && <ReviewTab enabled={isDone("reviewer")} />}
-            {activeTab === "git" && <GitTab enabled={isDone("git")} />}
-            {activeTab === "activity" && (
-              <div className="tab-panel tab-panel--activity">
-                <EventLog events={log} />
-              </div>
-            )}
-          </div>
-        </section>
-      </main>
+            </section>
+          </main>
+        </RunContext.Provider>
+      </div>
     </div>
   );
 }
