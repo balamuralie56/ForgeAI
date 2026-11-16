@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Repo hygiene:** Repaired a corrupted, duplicated `.gitignore`; added the missing `LICENSE` (MIT) and an `.env.example` documenting all `FORGE_*` overrides.
 
 ### Added
+- **History Engine:** New `forge_core/history` package with a `HistoryService` (registered in the Kernel) backed by a dedicated `forge_history.db`. Every workflow run now keeps its own copy of each plugin report, so a later run no longer overwrites an earlier one. Captured by the `WorkflowOrchestrator` whenever it persists workflow state; skipped when no history service is registered, and a history failure never fails a workflow.
+- **History API:** `GET /api/history/runs`, `GET /api/history/runs/{id}`, `GET /api/history/runs/{id}/artifacts/{kind}`, `DELETE /api/history/runs/{id}` (refuses runs still in progress), and `GET /api/history/storage`.
+- **Project Memory:** `ProjectMemory.delete_metadata()` to remove a stored key.
 - **Security Plugin:** Implemented dynamic Security plugin checking python files for AST vulnerabilities (eval, exec, shell commands, pickling, weak crypto, temp files, hardcoded passwords, SQL injection), checking requirements.txt for CVE dependencies, and scanning for copyleft licenses.
 - **SARIF Standard Export:** Formatted reports to industry-standard SARIF JSON reports, alongside markdown and standard report JSON deliverables.
 - **Release Quality Gates:** Integrated quality gates checking maximum critical/high findings count and overall risk scores, halting git commits and pipeline release if exceeded.

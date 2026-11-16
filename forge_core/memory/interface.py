@@ -83,6 +83,16 @@ class ProjectMemory(ABC):
         pass
 
     @abstractmethod
+    def delete_metadata(self, key: str) -> None:
+        """
+        Removes a value from project metadata. Deleting a missing key is a no-op.
+
+        Args:
+            key (str): Metadata key.
+        """
+        pass
+
+    @abstractmethod
     def get_generated_files(self) -> Dict[str, Any]:
         """Retrieves a dictionary of all recorded generated files."""
         pass

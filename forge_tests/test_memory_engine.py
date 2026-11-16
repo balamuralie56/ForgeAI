@@ -90,6 +90,18 @@ class TestMemoryEngine(unittest.TestCase):
         self.assertIn("task_001", tasks)
         self.assertEqual(tasks["task_001"]["result"]["success"], True)
 
+    def test_project_memory_delete_metadata(self) -> None:
+        """Tests that metadata can be removed, and removing a missing key is a no-op."""
+        project = self.memory_service.project
+        project.set_metadata("to_remove", {"a": 1})
+        project.set_metadata("to_keep", "kept")
+
+        project.delete_metadata("to_remove")
+        project.delete_metadata("never_existed")
+
+        self.assertIsNone(project.get_metadata("to_remove"))
+        self.assertEqual(project.get_metadata("to_keep"), "kept")
+
     def test_db_persistence_across_reboots(self) -> None:
         """Tests that Project Memory persists correctly to disk across Service restarts."""
         # Write to first database instance

@@ -13,11 +13,14 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import AsyncIterator, Optional
 
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
 from forge_core.configuration.service import ConfigurationService
 from forge_core.event_bus.service import EventBusService
+from forge_core.history.exceptions import HistoryError
+from forge_core.history.models import REPORT_KINDS
+from forge_core.history.service import HistoryService
 from forge_core.memory.service import MemoryService
 from forge_core.workflow.service import WorkflowService
 from forge_core.workflow.models import WorkflowType
@@ -35,6 +38,12 @@ from .schemas import (
     FileContentResponse,
     ReportResponse,
     DiagnosticsResponse,
+    RunSummaryModel,
+    RunListResponse,
+    RunDetailResponse,
+    RunArtifactResponse,
+    DeleteRunResponse,
+    StorageResponse,
 )
 
 logger = logging.getLogger("ForgeAI.API")
@@ -42,16 +51,7 @@ logger = logging.getLogger("ForgeAI.API")
 # Every report a plugin persists to project memory, keyed exactly as each
 # plugin's service.py calls memory.project.set_metadata(key, ...). Explicit
 # allowlist so /api/reports/{key} can't be used to read arbitrary memory keys.
-_REPORT_KEYS = {
-    "project_plan",
-    "architecture_specification",
-    "implementation_report",
-    "test_report",
-    "documentation_report",
-    "security_report",
-    "review_report",
-    "git_report",
-}
+_REPORT_KEYS = REPORT_KINDS
 
 _broadcaster: Optional[EventBroadcaster] = None
 
@@ -95,6 +95,10 @@ def _config_service() -> ConfigurationService:
 
 def _memory_service() -> MemoryService:
     return bootstrap.get_kernel().registry.resolve(MemoryService)  # type: ignore[type-abstract]
+
+
+def _history_service() -> HistoryService:
+    return bootstrap.get_kernel().registry.resolve(HistoryService)  # type: ignore[type-abstract]
 
 
 @app.get("/api/diagnostics", response_model=DiagnosticsResponse)
@@ -242,6 +246,92 @@ def get_report(report_key: str) -> ReportResponse:
         )
 
     return ReportResponse(report=report_key, data=data)
+
+
+@app.get("/api/history/runs", response_model=RunListResponse)
+def list_runs(
+    limit: int = Query(50, ge=1, le=200), offset: int = Query(0, ge=0)
+) -> RunListResponse:
+    """Lists recorded workflow runs, newest first."""
+    history = _history_service()
+    return RunListResponse(
+        runs=[RunSummaryModel(**r.to_dict()) for r in history.list_runs(limit, offset)],
+        total=history.count_runs(),
+        limit=limit,
+        offset=offset,
+    )
+
+
+@app.get("/api/history/runs/{workflow_id}", response_model=RunDetailResponse)
+def get_run(workflow_id: str) -> RunDetailResponse:
+    """Returns one recorded run's stages, errors and the reports it stored."""
+    run = _history_service().get_run(workflow_id)
+    if run is None:
+        raise HTTPException(status_code=404, detail="Run not found.")
+    return RunDetailResponse(**run.to_dict())
+
+
+@app.get(
+    "/api/history/runs/{workflow_id}/artifacts/{kind}",
+    response_model=RunArtifactResponse,
+)
+def get_run_artifact(workflow_id: str, kind: str) -> RunArtifactResponse:
+    """
+    Returns one plugin report (plan, architecture, tests, ...) exactly as that
+    specific run produced it - unlike /api/reports/{key}, later runs never
+    overwrite it.
+    """
+    if kind not in REPORT_KINDS:
+        raise HTTPException(status_code=404, detail=f"Unknown report: {kind}")
+
+    data = _history_service().get_artifact(workflow_id, kind)
+    if data is None:
+        raise HTTPException(
+            status_code=404, detail=f"Report '{kind}' is not stored for this run."
+        )
+    return RunArtifactResponse(workflow_id=workflow_id, kind=kind, data=data)
+
+
+@app.delete("/api/history/runs/{workflow_id}", response_model=DeleteRunResponse)
+def delete_run(workflow_id: str) -> DeleteRunResponse:
+    """
+    Deletes a recorded run: its history rows, its stored reports, and its
+    workflow state in project memory. Generated files are not touched - all
+    runs currently share one workspace directory, so they can't be attributed
+    to a single run.
+    """
+    history = _history_service()
+    if runner.active_workflow_id() == workflow_id:
+        raise HTTPException(
+            status_code=409, detail="Cannot delete a run that is still running."
+        )
+    if history.get_run(workflow_id) is None:
+        raise HTTPException(status_code=404, detail="Run not found.")
+
+    try:
+        history.delete_run(workflow_id)
+    except HistoryError as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
+    _memory_service().project.delete_metadata(f"workflow:{workflow_id}")
+    return DeleteRunResponse(workflow_id=workflow_id, deleted=True)
+
+
+@app.get("/api/history/storage", response_model=StorageResponse)
+def get_storage() -> StorageResponse:
+    """Reports the storage used by recorded history and the generated workspace."""
+    usage = _history_service().storage_usage()
+    workspace = Path(_config_service().get_system_settings().workspace_dir)
+    workspace_bytes = (
+        sum(p.stat().st_size for p in workspace.rglob("*") if p.is_file())
+        if workspace.exists()
+        else 0
+    )
+    return StorageResponse(
+        history_database_bytes=usage.database_bytes,
+        run_count=usage.run_count,
+        artifact_bytes_by_run=usage.artifact_bytes_by_run,
+        workspace_bytes=workspace_bytes,
+    )
 
 
 @app.websocket("/ws/events")

@@ -20,6 +20,11 @@ class WorkflowAlreadyRunningError(Exception):
     """Raised when a second workflow run is requested while one is already in flight."""
 
 
+def active_workflow_id() -> Optional[str]:
+    """Returns the ID of the workflow currently executing, or None if idle."""
+    return _active_workflow_id
+
+
 def is_running() -> bool:
     """Returns whether a workflow is currently executing on the background thread."""
     return _active_workflow_id is not None

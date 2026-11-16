@@ -11,6 +11,7 @@ from forge_core.configuration.config_manager import ConfigurationManager
 from forge_core.configuration.service import ConfigurationService
 from forge_core.event_bus.event_bus import ForgeAIEventBus
 from forge_core.event_bus.service import EventBusService
+from forge_core.history.service import ForgeAIHistoryService, HistoryService
 from forge_core.logging.engine import LoggingEngine
 from forge_core.logging.service import LoggingService
 from forge_core.memory.service import MemoryService, ForgeAIMemoryService
@@ -59,6 +60,7 @@ class ForgeAIKernel(Kernel):
         self.plugin_manager: Optional[PluginManager] = None
         self.event_bus: Optional[ForgeAIEventBus] = None
         self.memory: Optional[ForgeAIMemoryService] = None
+        self.history: Optional[ForgeAIHistoryService] = None
         self.task_engine: Optional[ForgeAITaskEngine] = None
         self.workflow: Optional[Any] = None
         self._booted: bool = False
@@ -122,6 +124,11 @@ class ForgeAIKernel(Kernel):
             self.memory = ForgeAIMemoryService()
             self._registry.register(MemoryService, self.memory)  # type: ignore[type-abstract]
             self._lifecycle_manager.register(self.memory)
+
+            # 6b. Initialize History Engine
+            self.history = ForgeAIHistoryService()
+            self._registry.register(HistoryService, self.history)  # type: ignore[type-abstract]
+            self._lifecycle_manager.register(self.history)
 
             # 7. Initialize Task Engine
             self.task_engine = ForgeAITaskEngine(self.event_bus, self.memory)
@@ -200,6 +207,7 @@ class ForgeAIKernel(Kernel):
             "ModelRouter": "Ready" if self.model_router else "Missing",
             "EventBus": "Ready" if self.event_bus else "Missing",
             "Memory": "Ready" if self.memory else "Missing",
+            "History": "Ready" if self.history else "Missing",
             "TaskEngine": "Ready" if self.task_engine else "Missing",
             "Workflow": "Ready" if self.workflow else "Missing",
         }

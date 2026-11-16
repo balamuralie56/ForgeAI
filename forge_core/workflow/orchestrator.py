@@ -6,8 +6,11 @@ import time
 import logging
 import uuid
 from typing import Any, Callable, Dict, List, Optional, Type
+from forge_core.kernel.exceptions import ServiceNotFoundError
 from forge_core.kernel.service_registry import ServiceRegistry
 from forge_core.event_bus.service import EventBusService
+from forge_core.history.exceptions import HistoryError
+from forge_core.history.service import HistoryService
 from forge_core.event_bus.models import Event
 from forge_core.memory.service import MemoryService
 from forge_core.configuration.service import ConfigurationService
@@ -230,7 +233,11 @@ class WorkflowOrchestrator:
         logger.info(f"Workflow '{workflow.id}' has been cancelled by user.")
 
     def _save_workflow(self, workflow: Workflow) -> None:
-        """Saves the workflow representation to the persistent key-value store."""
+        """
+        Saves the workflow representation to the persistent key-value store and,
+        when a History Engine is registered, to the per-run history.
+        """
+        workflow_dict: Optional[Dict[str, Any]] = None
         try:
             workflow_dict = workflow.to_dict()
             self._memory.project.set_metadata(f"workflow:{workflow.id}", workflow_dict)
@@ -239,6 +246,22 @@ class WorkflowOrchestrator:
             )
         except Exception as e:
             logger.error(f"Failed to persist workflow '{workflow.id}' to memory: {e}")
+
+        if workflow_dict is not None:
+            self._record_history(workflow.id, workflow_dict)
+
+    def _record_history(self, workflow_id: str, workflow_dict: Dict[str, Any]) -> None:
+        """Mirrors a workflow snapshot into the History Engine, if one is registered."""
+        try:
+            history = self._registry.resolve(HistoryService)  # type: ignore[type-abstract]
+        except ServiceNotFoundError:
+            return
+
+        try:
+            model = self._config.get_model_settings().default_model
+            history.record_run_snapshot(workflow_dict, model)
+        except HistoryError as e:
+            logger.error(f"Failed to record workflow '{workflow_id}' in history: {e}")
 
     def load_workflow(self, workflow_id: str) -> Optional[Workflow]:
         """Loads a workflow state by ID."""

@@ -78,6 +78,61 @@ class ReportResponse(BaseModel):
     data: Dict[str, Any]
 
 
+class RunSummaryModel(BaseModel):
+    """One recorded workflow run, as shown in the history list."""
+
+    workflow_id: str
+    name: str
+    goal: str
+    workflow_type: str
+    state: str
+    progress: float
+    model: str
+    created_at: float
+    updated_at: float
+
+
+class RunListResponse(BaseModel):
+    """A page of recorded workflow runs, newest first."""
+
+    runs: List[RunSummaryModel]
+    total: int
+    limit: int
+    offset: int
+
+
+class RunDetailResponse(RunSummaryModel):
+    """A recorded run with its per-stage status and the report kinds it stored."""
+
+    stages: List[Dict[str, Any]]
+    errors: Dict[str, str] = Field(default_factory=dict)
+    artifact_kinds: List[str]
+
+
+class RunArtifactResponse(BaseModel):
+    """One plugin report belonging to a specific recorded run."""
+
+    workflow_id: str
+    kind: str
+    data: Dict[str, Any]
+
+
+class DeleteRunResponse(BaseModel):
+    """Result of deleting a recorded run."""
+
+    workflow_id: str
+    deleted: bool
+
+
+class StorageResponse(BaseModel):
+    """Storage used by ForgeAI's recorded history and generated workspace."""
+
+    history_database_bytes: int
+    run_count: int
+    artifact_bytes_by_run: Dict[str, int]
+    workspace_bytes: int
+
+
 class DiagnosticsResponse(BaseModel):
     """System diagnostics snapshot, mirroring `launcher.py --diagnostics`."""
 

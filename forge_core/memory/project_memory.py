@@ -48,6 +48,15 @@ class ForgeAIProjectMemory(ProjectMemory):
         """
         self._store.set(f"meta:{key}", value)
 
+    def delete_metadata(self, key: str) -> None:
+        """
+        Removes a value from project metadata.
+
+        Args:
+            key (str): Metadata key.
+        """
+        self._store.delete(f"meta:{key}")
+
     def get_generated_files(self) -> Dict[str, Any]:
         """
         Retrieves a dictionary of all recorded generated files.

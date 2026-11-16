@@ -186,7 +186,7 @@ v0.9.5
 
 Completed
 
-✔ Core Runtime — Kernel, Configuration, Logging, Event Bus, Memory, Plugin Manager, Task Engine (DAG scheduler/retry), Model Router (Ollama + OpenAI-compatible providers), Workflow Orchestrator (state machine, stage scheduler, crash recovery)
+✔ Core Runtime — Kernel, Configuration, Logging, Event Bus, Memory, Plugin Manager, Task Engine (DAG scheduler/retry), History Engine (per-run workflow and report history, API only so far), Model Router (Ollama + OpenAI-compatible providers), Workflow Orchestrator (state machine, stage scheduler, crash recovery)
 
 ✔ All 8 AI Plugins — Planner, Architect, Developer, Tester, Documentation, Git, Security, Reviewer (each with service + models + components and a dedicated test suite)
 
@@ -194,7 +194,7 @@ Completed
 
 ✔ React Frontend (`forge_frontend`) — multi-tab workbench consuming the real API/WebSocket stream
 
-✔ Unit Tests — 323 tests across `forge_tests`, 100% passing
+✔ Unit Tests — 363 tests across `forge_tests`, 100% passing
 
 ✔ Git Repository / GitHub Repository / Documentation / Changelog
 
