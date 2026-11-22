@@ -73,6 +73,7 @@ class ConfigurationManager(ConfigurationService):
                 git=env_overridden_data.get("git", {}),
                 security=env_overridden_data.get("security", {}),
                 reviewer=env_overridden_data.get("reviewer", {}),
+                assistant=env_overridden_data.get("assistant", {}),
             )
         except TypeError as e:
             raise ConfigurationValidationError(f"Schema mismatch: {e}") from e
@@ -132,6 +133,19 @@ class ConfigurationManager(ConfigurationService):
             data.setdefault("git", {})["github_token"] = os.environ.get(
                 "FORGE_GITHUB_TOKEN"
             )
+        if os.environ.get("FORGE_ASSISTANT_MODEL"):
+            data.setdefault("assistant", {})["model"] = os.environ.get(
+                "FORGE_ASSISTANT_MODEL"
+            )
+        context_tokens = os.environ.get("FORGE_ASSISTANT_CONTEXT_TOKENS")
+        if context_tokens:
+            try:
+                data.setdefault("assistant", {})["context_tokens"] = int(context_tokens)
+            except ValueError:
+                logger.warning(
+                    f"Ignoring FORGE_ASSISTANT_CONTEXT_TOKENS={context_tokens!r}: "
+                    "not an integer."
+                )
         return data
 
     def save_configuration(self) -> None:

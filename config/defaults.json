@@ -18,7 +18,20 @@
     },
     "plugins": {
         "plugin_dir": "forge_plugins",
-        "enabled_plugins": ["planner", "architect", "developer", "tester", "documentation", "git", "security", "reviewer"]
+        "enabled_plugins": ["planner", "architect", "developer", "tester", "documentation", "git", "security", "reviewer", "assistant"]
+    },
+    "assistant": {
+        "model": "",
+        "context_tokens": 8192,
+        "answer_tokens": 1024,
+        "edit_tokens": 2048,
+        "temperature": 0.2,
+        "max_edit_attempts": 3,
+        "max_fix_rounds": 3,
+        "check_timeout": 300,
+        "max_indexed_files": 4000,
+        "max_file_bytes": 262144,
+        "database_path": "forge_data/databases/forge_assistant.db"
     },
     "git": {
         "auto_branch": true,
@@ -72,4 +85,4 @@
             "REV-010-CONCRETEDEP": true
         }
     }
-}
+}

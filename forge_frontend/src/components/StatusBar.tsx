@@ -3,7 +3,15 @@ import { api } from "../api";
 import type { Diagnostics } from "../types";
 import type { ConnectionState } from "../useEventStream";
 
-export function StatusBar({ connectionState }: { connectionState: ConnectionState }) {
+export function StatusBar({
+  connectionState,
+  view,
+  onViewChange,
+}: {
+  connectionState: ConnectionState;
+  view: "build" | "assistant";
+  onViewChange: (view: "build" | "assistant") => void;
+}) {
   const [diagnostics, setDiagnostics] = useState<Diagnostics | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,6 +40,24 @@ export function StatusBar({ connectionState }: { connectionState: ConnectionStat
         <span className="status-bar__version">
           {diagnostics ? `v${diagnostics.version}` : "…"}
         </span>
+        <nav className="segmented status-bar__views" aria-label="View">
+          <button
+            className={view === "build" ? "segmented__on" : ""}
+            aria-pressed={view === "build"}
+            onClick={() => onViewChange("build")}
+            title="Generate a new project from a goal"
+          >
+            Build
+          </button>
+          <button
+            className={view === "assistant" ? "segmented__on" : ""}
+            aria-pressed={view === "assistant"}
+            onClick={() => onViewChange("assistant")}
+            title="Chat about and change an existing project"
+          >
+            Assistant
+          </button>
+        </nav>
       </div>
       <div className="status-bar__items">
         <StatusPill

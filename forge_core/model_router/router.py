@@ -4,13 +4,13 @@ Acts as a mediator resolving ModelProviders and routing LLM generation calls.
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Iterator, List, Optional
 
 from forge_core.configuration.service import ConfigurationService
 
 from .exceptions import ProviderNotFoundError
 from .providers import OllamaProvider, OpenAICompatibleProvider
-from .service import ModelProvider, ModelResponse, ModelRouterService
+from .service import ChatChunk, ModelProvider, ModelResponse, ModelRouterService
 
 logger = logging.getLogger("ForgeAI.ModelRouter")
 
@@ -146,3 +146,43 @@ class ModelRouter(ModelRouterService):
             f"Routing chat generation to provider '{target_provider_name}' (Model: {model or 'default'})"
         )
         return client.generate_chat(messages=messages, model=model, **inference_params)
+
+    def stream_chat(
+        self,
+        messages: List[Dict[str, str]],
+        provider: Optional[str] = None,
+        model: Optional[str] = None,
+        **kwargs: Any,
+    ) -> Iterator[ChatChunk]:
+        """
+        Routes a chat request to a provider and streams its reply.
+
+        The provider is resolved eagerly, so an unknown provider raises here
+        rather than on first iteration.
+
+        Args:
+            messages (List[Dict[str, str]]): Message history.
+            provider (Optional[str]): Target provider; defaults to configuration.
+            model (Optional[str]): Target model; defaults to the provider default.
+            **kwargs: Overrides for inference.
+
+        Returns:
+            Iterator[ChatChunk]: Incremental reply text; the last chunk has `done=True`.
+
+        Raises:
+            ProviderNotFoundError: If the target provider is not registered.
+        """
+        settings = self._config_service.get_model_settings()
+        target_provider_name = (provider or settings.provider).lower()
+        client = self.get_provider(target_provider_name)
+
+        inference_params = {
+            "temperature": kwargs.get("temperature", settings.temperature),
+            "max_tokens": kwargs.get("max_tokens", settings.max_tokens),
+            **kwargs,
+        }
+        logger.debug(
+            f"Routing streamed chat to provider '{target_provider_name}' "
+            f"(Model: {model or 'default'})"
+        )
+        return client.stream_chat(messages=messages, model=model, **inference_params)

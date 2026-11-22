@@ -6,10 +6,10 @@ Uses only standard Python libraries (urllib) to keep the engine lightweight.
 import json
 import urllib.error
 import urllib.request
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Iterator, List, Optional
 
 from .exceptions import GenerationError
-from .service import ModelProvider, ModelResponse
+from .service import ChatChunk, ModelProvider, ModelResponse
 
 
 class BaseHTTPProvider(ModelProvider):
@@ -83,6 +83,71 @@ class BaseHTTPProvider(ModelProvider):
             raise GenerationError(
                 f"Unexpected error during API call to {self._name} provider: {e}"
             ) from e
+
+    def _stream_lines(self, path: str, payload: Dict[str, Any]) -> Iterator[str]:
+        """
+        Submits a POST request and yields the non-empty lines of a streamed body.
+
+        The connection is closed as soon as the caller stops iterating (for
+        example when a client cancels a reply), which also stops generation on
+        the provider side.
+
+        Args:
+            path (str): Relative API path (e.g. '/api/chat').
+            payload (Dict[str, Any]): JSON payload dictionary.
+
+        Yields:
+            str: Each non-empty, decoded line of the response body.
+
+        Raises:
+            GenerationError: If the request fails, returns an error status, or
+                the connection drops or times out mid-stream.
+        """
+        url = f"{self.base_url}{path}"
+        data = json.dumps(payload).encode("utf-8")
+        req = urllib.request.Request(
+            url=url, data=data, headers={"Content-Type": "application/json"}
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=self.timeout) as response:
+                for raw_line in response:
+                    line = raw_line.decode("utf-8").strip()
+                    if line:
+                        yield line
+        except urllib.error.HTTPError as e:
+            try:
+                error_body = e.read().decode("utf-8")
+            except OSError as read_error:
+                error_body = f"<unreadable: {read_error}>"
+            raise GenerationError(
+                f"HTTP Error {e.code} during streaming with {self._name} provider: "
+                f"{e.reason}. Body: {error_body}"
+            ) from e
+        except urllib.error.URLError as e:
+            raise GenerationError(
+                f"Network error connecting to {self._name} provider at {url}: {e.reason}"
+            ) from e
+        except TimeoutError as e:
+            raise GenerationError(
+                f"Streaming from {self._name} provider stalled for more than "
+                f"{self.timeout}s"
+            ) from e
+        except (OSError, UnicodeDecodeError) as e:
+            raise GenerationError(
+                f"Stream from {self._name} provider was interrupted: {e}"
+            ) from e
+
+
+def _ollama_options(kwargs: Dict[str, Any]) -> Dict[str, Any]:
+    """Maps standard inference parameters onto Ollama's `options` object."""
+    options: Dict[str, Any] = {}
+    if "temperature" in kwargs:
+        options["temperature"] = kwargs["temperature"]
+    if "max_tokens" in kwargs:
+        options["num_predict"] = kwargs["max_tokens"]
+    if "options" in kwargs:
+        options.update(kwargs["options"])
+    return options
 
 
 class OllamaProvider(BaseHTTPProvider):
@@ -193,6 +258,73 @@ class OllamaProvider(BaseHTTPProvider):
             usage=usage,
         )
 
+    def stream_chat(
+        self, messages: List[Dict[str, str]], model: Optional[str] = None, **kwargs: Any
+    ) -> Iterator[ChatChunk]:
+        """
+        Streams a chat reply from Ollama's `/api/chat` NDJSON stream.
+
+        Args:
+            messages (List[Dict[str, str]]): Messages with 'role' and 'content'.
+            model (Optional[str]): Target model. Defaults to the provider default.
+            **kwargs: temperature, max_tokens, options, response_format.
+
+        Yields:
+            ChatChunk: Incremental reply text; the last chunk has `done=True`
+            and carries token usage.
+
+        Raises:
+            GenerationError: If Ollama reports an error, sends malformed data,
+                or closes the stream before the reply is finished.
+        """
+        target_model = model or self.default_model
+        payload: Dict[str, Any] = {
+            "model": target_model,
+            "messages": messages,
+            "stream": True,
+            "keep_alive": self.keep_alive,
+        }
+        options = _ollama_options(kwargs)
+        if options:
+            payload["options"] = options
+        if kwargs.get("response_format") == "json":
+            payload["format"] = "json"
+
+        for line in self._stream_lines("/api/chat", payload):
+            try:
+                event = json.loads(line)
+            except json.JSONDecodeError as e:
+                raise GenerationError(
+                    f"Malformed stream data from Ollama: {line[:200]!r}"
+                ) from e
+            if not isinstance(event, dict):
+                raise GenerationError(
+                    f"Unexpected stream data from Ollama: {line[:200]!r}"
+                )
+            if event.get("error"):
+                raise GenerationError(f"Ollama error: {event['error']}")
+
+            message = event.get("message")
+            text = message.get("content", "") if isinstance(message, dict) else ""
+            if event.get("done"):
+                prompt_eval = int(event.get("prompt_eval_count", 0) or 0)
+                eval_count = int(event.get("eval_count", 0) or 0)
+                yield ChatChunk(
+                    text=text,
+                    done=True,
+                    model_name=target_model,
+                    usage={
+                        "prompt_tokens": prompt_eval,
+                        "completion_tokens": eval_count,
+                        "total_tokens": prompt_eval + eval_count,
+                    },
+                )
+                return
+            if text:
+                yield ChatChunk(text=text, model_name=target_model)
+
+        raise GenerationError("Ollama closed the stream before the reply finished.")
+
 
 class OpenAICompatibleProvider(BaseHTTPProvider):
     """
@@ -284,4 +416,86 @@ class OpenAICompatibleProvider(BaseHTTPProvider):
             raw_response=raw_response,
             model_name=target_model,
             usage=usage,
+        )
+
+    def stream_chat(
+        self, messages: List[Dict[str, str]], model: Optional[str] = None, **kwargs: Any
+    ) -> Iterator[ChatChunk]:
+        """
+        Streams a chat reply from an OpenAI-compatible `/chat/completions`
+        server-sent-event stream.
+
+        Args:
+            messages (List[Dict[str, str]]): Messages with 'role' and 'content'.
+            model (Optional[str]): Target model. Defaults to the provider default.
+            **kwargs: temperature, max_tokens, top_p, penalties, response_format.
+
+        Yields:
+            ChatChunk: Incremental reply text; the last chunk has `done=True`.
+
+        Raises:
+            GenerationError: If the server sends malformed data or closes the
+                stream before the reply is finished.
+        """
+        target_model = model or self.default_model
+        payload: Dict[str, Any] = {
+            "model": target_model,
+            "messages": messages,
+            "stream": True,
+        }
+        for param in [
+            "temperature",
+            "max_tokens",
+            "top_p",
+            "presence_penalty",
+            "frequency_penalty",
+        ]:
+            if param in kwargs:
+                payload[param] = kwargs[param]
+        if kwargs.get("response_format") == "json":
+            payload["response_format"] = {"type": "json_object"}
+
+        usage: Dict[str, int] = {}
+        finished = False
+        for line in self._stream_lines("/chat/completions", payload):
+            if not line.startswith("data:"):
+                continue
+            body = line[len("data:") :].strip()
+            if body == "[DONE]":
+                yield ChatChunk(
+                    text="", done=True, model_name=target_model, usage=usage
+                )
+                return
+            try:
+                event = json.loads(body)
+            except json.JSONDecodeError as e:
+                raise GenerationError(
+                    f"Malformed stream data from {self._name} provider: {body[:200]!r}"
+                ) from e
+            if not isinstance(event, dict):
+                continue
+            usage_data = event.get("usage")
+            if isinstance(usage_data, dict):
+                usage = {
+                    "prompt_tokens": int(usage_data.get("prompt_tokens", 0) or 0),
+                    "completion_tokens": int(
+                        usage_data.get("completion_tokens", 0) or 0
+                    ),
+                    "total_tokens": int(usage_data.get("total_tokens", 0) or 0),
+                }
+            for choice in event.get("choices") or []:
+                if not isinstance(choice, dict):
+                    continue
+                delta = choice.get("delta")
+                text = delta.get("content") if isinstance(delta, dict) else None
+                if text:
+                    yield ChatChunk(text=text, model_name=target_model)
+                if choice.get("finish_reason"):
+                    finished = True
+
+        if finished:
+            yield ChatChunk(text="", done=True, model_name=target_model, usage=usage)
+            return
+        raise GenerationError(
+            f"{self._name} provider closed the stream before the reply finished."
         )

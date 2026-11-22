@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { StatusBar } from "./components/StatusBar";
 import { HistorySidebar } from "./components/HistorySidebar";
+import { AssistantView } from "./components/assistant/AssistantView";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { PipelineView } from "./components/PipelineView";
 import { EventLog } from "./components/EventLog";
@@ -22,6 +23,17 @@ import type { RunDetail, StageStatus, WorkflowStatus } from "./types";
 import "./App.css";
 
 const ACTIVE_STATES = new Set(["PENDING", "RUNNING", "WAITING"]);
+const VIEW_KEY = "forge.view";
+
+type View = "build" | "assistant";
+
+function initialView(): View {
+  try {
+    return window.localStorage.getItem(VIEW_KEY) === "assistant" ? "assistant" : "build";
+  } catch {
+    return "build";
+  }
+}
 
 function findStage(workflow: WorkflowStatus | null, name: string): StageStatus | undefined {
   return workflow?.stages.find((s) => s.name === name);
@@ -55,6 +67,7 @@ function App() {
   const [openedFromHistory, setOpenedFromHistory] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("overview");
+  const [view, setView] = useState<View>(initialView);
   const pollRef = useRef<number | undefined>(undefined);
   const currentIdRef = useRef<string | null>(null);
 
@@ -122,6 +135,15 @@ function App() {
     if (id === currentIdRef.current) newBuild();
   };
 
+  const changeView = (next: View) => {
+    setView(next);
+    try {
+      window.localStorage.setItem(VIEW_KEY, next);
+    } catch {
+      // Storage can be unavailable (private mode); the view just isn't remembered.
+    }
+  };
+
   const isRunning = workflow ? ACTIVE_STATES.has(workflow.state) : false;
   const isDone = (stageName: string) => findStage(workflow, stageName)?.status === "COMPLETED";
   const stageDot = (stageName: string): string => {
@@ -147,9 +169,17 @@ function App() {
 
   return (
     <div className="app">
-      <StatusBar connectionState={connectionState} />
+      <StatusBar connectionState={connectionState} view={view} onViewChange={changeView} />
 
-      <div className="app__body">
+      {view === "assistant" && (
+        <div className="app__body">
+          <ErrorBoundary>
+            <AssistantView />
+          </ErrorBoundary>
+        </div>
+      )}
+
+      <div className="app__body" hidden={view !== "build"}>
         <HistorySidebar
           selectedId={workflow?.id ?? null}
           refreshKey={`${workflow?.id}|${workflow?.state}|${workflow?.progress}`}

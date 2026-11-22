@@ -2,7 +2,7 @@
 
 ForgeAI is a completely local, privacy-first AI Operating System for Software Engineering. It is designed to autonomously plan software projects, design software architecture, write tests, develop applications, debug code, and review pull requests—all running locally on the user's computer without dependency on cloud AI services.
 
-**Current state: v0.9.5.** Core runtime, all 8 plugins (Planner, Architect, Developer, Tester, Documentation, Security, Reviewer, Git), the FastAPI backend, and the React frontend are implemented and covered by 415 passing tests. The sections below are written to match what actually runs today, not the long-term vision — see [Section 6](#6-honest-project-status) for what's finished, what's a known gap, and what hasn't been started.
+**Current state: v0.9.5.** Core runtime, the 8 build plugins (Planner, Architect, Developer, Tester, Documentation, Security, Reviewer, Git), the local coding Assistant, the FastAPI backend, and the React frontend are implemented and covered by 492 passing tests. The sections below are written to match what actually runs today, not the long-term vision — see [Section 6](#6-honest-project-status) for what's finished, what's a known gap, and what hasn't been started.
 
 ---
 
@@ -34,6 +34,13 @@ curl -X POST http://localhost:8420/api/workflows -H "Content-Type: application/j
 
 Poll `GET /api/workflows/{workflow_id}` for progress, then `GET /api/reports/project_plan` and `GET /api/reports/architecture_specification` for the Planner/Architect output, and `GET /api/workflows/{workflow_id}/files` to see what the Developer plugin wrote to the workspace. There is currently no CLI for this — see Section 6.
 
+### Work on your own code: the Assistant
+Switch the top bar of the web UI to **Assistant**, pick a project folder and (ideally) a check command such as `python -m pytest -q`, then:
+- **Ask** questions about the code ("where is the config loaded?", "why does @test_store.py fail?").
+- **Change** code ("add a `--verbose` flag to @cli.py"). ForgeAI proposes a diff. Edits that don't match the files or would break imports or names go back to the model automatically. Nothing is written until you click **Apply change** (then your check runs), and **Undo change** restores the files. Optional auto-fix applies changes, runs the check and fixes failures by itself.
+
+It runs on the same local model. With `qwen2.5-coder:3b` on an iGPU, a focused change takes about 30–90 s. See [assistant.md](forge_docs/modules/assistant.md) for what it checks and what it can't do.
+
 ---
 
 ## 1. Vision & Core Philosophy
@@ -61,7 +68,7 @@ ForgeAI/
 │   ├── task_engine/              # Directed Acyclic Graph (DAG) executor
 │   └── workflow/                  # Stage orchestrator / state machine / scheduler
 ├── forge_plugins/             # Planner, Architect, Developer, Tester, Documentation,
-│                               # Security, Reviewer, Git - each with service/models/components
+│                               # Security, Reviewer, Git, Assistant - each with service/models/components
 ├── forge_api/                  # FastAPI backend (REST + WebSocket) exposing the Kernel/Workflow
 ├── forge_frontend/             # React multi-tab workbench consuming the API
 ├── forge_data/                  # Runtime caches, logs, databases, and backups
@@ -161,6 +168,7 @@ ForgeAI is far enough along to be worth showing, and far enough from done that i
 - All 8 plugins: Planner, Architect, Developer, Tester, Documentation, Security, Git, Reviewer.
 - The FastAPI backend and React frontend, wired to the real services (no mocked responses).
 - The `BUILD_ONLY` workflow (Section 0) runs end-to-end today; `forge_workspace/todo_pipeline_demo` is a real artifact proving it.
+- The Assistant: a local coding assistant for existing projects (questions, and checked, reversible changes with test-driven auto-fix). It is only as capable as the local model: a 3B model handles focused single-file changes well and struggles with multi-file refactors. The checks catch broken edits, not wrong ideas. See [assistant.md](forge_docs/modules/assistant.md).
 - The Developer plugin statically validates the code it generates (without executing it) and reports `VALIDATION_FAILED` instead of `SUCCESS` when the code will not import or run. Running the workflow does not mean the generated code is correct: with small local models (e.g. `qwen2.5-coder:3b`) it often isn't, and the validation panel in the Files tab says so. See [code_validation.md](forge_docs/modules/code_validation.md).
 
 **Known, intentional gap:**

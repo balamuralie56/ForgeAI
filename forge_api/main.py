@@ -26,7 +26,7 @@ from forge_core.workflow.service import WorkflowService
 from forge_core.workflow.models import WorkflowType
 from forge_core.version import __version__
 
-from . import bootstrap, recovery, runner
+from . import assistant_routes, bootstrap, recovery, runner
 from .ws_manager import EventBroadcaster
 from .schemas import (
     CreateWorkflowRequest,
@@ -90,6 +90,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(assistant_routes.router)
 
 
 def _workflow_service() -> WorkflowService:

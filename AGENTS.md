@@ -190,11 +190,13 @@ Completed
 
 ✔ All 8 AI Plugins — Planner, Architect, Developer, Tester, Documentation, Git, Security, Reviewer (each with service + models + components and a dedicated test suite)
 
+✔ Assistant Plugin — local coding assistant for existing projects: retrieval, streamed replies, SEARCH/REPLACE edits with static before/after checks and retries, user-approved apply/undo, check command with reproduce-first and auto-fix rounds; conversations persisted in `forge_assistant.db` and shown in the frontend's Assistant view (see `forge_docs/modules/assistant.md`)
+
 ✔ FastAPI Backend (`forge_api`) — REST + WebSocket API exposing diagnostics, workflow creation/status, file listing, and plugin reports
 
 ✔ React Frontend (`forge_frontend`) — multi-tab workbench consuming the real API/WebSocket stream
 
-✔ Unit Tests — 415 tests across `forge_tests`, 100% passing
+✔ Unit Tests — 492 tests across `forge_tests`, 100% passing
 
 ✔ Git Repository / GitHub Repository / Documentation / Changelog
 

@@ -78,3 +78,4 @@ class ForgeConfig:
     git: Dict[str, Any] = field(default_factory=dict)
     security: Dict[str, Any] = field(default_factory=dict)
     reviewer: Dict[str, Any] = field(default_factory=dict)
+    assistant: Dict[str, Any] = field(default_factory=dict)

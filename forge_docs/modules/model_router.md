@@ -25,3 +25,17 @@ response = router.generate("Write a quicksort in Python.")
 print(response.text)
 print(f"Usage: {response.usage}")
 ```
+
+## Streaming
+`ModelRouterService.stream_chat(messages, ...)` returns an iterator of `ChatChunk(text, done, model_name, usage)`; the last chunk has `done=True` and carries token usage.
+
+- **Ollama** streams `/api/chat` NDJSON. Per-request options such as `options={"num_ctx": 8192}` override the server's default context window.
+- **OpenAI-compatible** servers stream `/chat/completions` server-sent events.
+- A provider that does not implement streaming inherits a fallback that calls `generate_chat` and returns the whole reply as one final chunk.
+
+Stopping iteration closes the HTTP connection, which also stops generation on the server.
+
+```python
+for chunk in router.stream_chat([{"role": "user", "content": "Explain this regex: ^a+$"}]):
+    print(chunk.text, end="", flush=True)
+```
