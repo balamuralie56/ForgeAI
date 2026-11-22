@@ -8,12 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased] - Phase 1 Active Development
 
 ### Fixed
+- **Developer status:** the Developer plugin no longer reports `SUCCESS` for code that cannot run; see Code Validation below.
 - **Workflow history ordering:** the orchestrator now records a run in history before its status becomes visible in project memory, so a client that sees a stage as completed can always read that stage's report.
 - **Python 3.14 compatibility:** Removed dead-code fallback branches in three Security Plugin rules that matched on `ast.Str`/`ast.NameConstant`, deprecated node types the parser hasn't produced since Python 3.8 and which the `ast` module removes entirely in 3.14.
 - **Secrets:** The Git plugin's GitHub PAT can now be supplied via the `FORGE_GITHUB_TOKEN` environment variable instead of only `forge.json`.
 - **Repo hygiene:** Repaired a corrupted, duplicated `.gitignore`; added the missing `LICENSE` (MIT) and an `.env.example` documenting all `FORGE_*` overrides.
 
 ### Added
+- **Code Validation (Developer Plugin):** a `CodeValidationStep` statically validates every generated file without executing it - Python syntax, JSON/TOML, unresolvable or relative-from-top-level imports, names imported but not defined in the target module, undefined names, undeclared third-party dependencies, leftover stubs/placeholder comments, and duplicates. `ImplementationReport.status` is now `SUCCESS`, `SUCCESS_WITH_WARNINGS` or `VALIDATION_FAILED`, and the report carries a `validation` result (also in `implementation_report.md`, a `developer.validated` event, and a panel in the UI's Files tab). Validated against the real broken `qwen2.5-coder:3b` output that was previously reported as SUCCESS. See `forge_docs/modules/code_validation.md`.
 - **History Engine:** New `forge_core/history` package with a `HistoryService` (registered in the Kernel) backed by a dedicated `forge_history.db`. Every workflow run now keeps its own copy of each plugin report, so a later run no longer overwrites an earlier one. Captured by the `WorkflowOrchestrator` whenever it persists workflow state; skipped when no history service is registered, and a history failure never fails a workflow.
 - **History API:** `GET /api/history/runs`, `GET /api/history/runs/{id}`, `GET /api/history/runs/{id}/artifacts/{kind}`, `DELETE /api/history/runs/{id}` (refuses runs still in progress), and `GET /api/history/storage`.
 - **History sidebar (frontend):** reopen or delete past runs, see storage used, and view any run's own reports in the existing tabs. Report text is rendered defensively and a per-tab error boundary stops an unexpected report shape from blanking the app (found when `qwen2.5-coder:3b` returned table columns as `{type, description}` objects).

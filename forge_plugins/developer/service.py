@@ -15,7 +15,7 @@ from forge_core.configuration.service import ConfigurationService
 from forge_plugins.planner.models import ProjectPlan
 from forge_plugins.architect.models import ArchitectureSpecification
 
-from .models import ImplementationReport
+from .models import ImplementationReport, ImplementationStatus
 from .exceptions import DeveloperError
 from .validators.architecture_validator import ArchitectureValidator
 from .writers.workspace_writer import WorkspaceWriter
@@ -28,6 +28,7 @@ from .components import (
     APIGenerator,
     BackendGenerator,
     FrontendGenerator,
+    CodeValidationStep,
     ImplementationReportGenerator,
 )
 
@@ -82,6 +83,7 @@ class ForgeAIDeveloper(DeveloperService):
             APIGenerator(),
             BackendGenerator(),
             FrontendGenerator(),
+            CodeValidationStep(),
             ImplementationReportGenerator(),
         ]
         self.pipeline = ImplementationPipeline(self.steps, self._event_bus)
@@ -170,13 +172,32 @@ class ForgeAIDeveloper(DeveloperService):
                 report_summary = gf.content
                 break
 
-        # 7. Construct ImplementationReport
+        # 7. Construct ImplementationReport, with a status that reflects whether
+        # the generated code actually validates rather than just "files written".
+        validation = context.validation
+        status = (
+            validation.status
+            if validation is not None
+            else ImplementationStatus.SUCCESS
+        )
         report = ImplementationReport(
             project_id=spec.project_id,
             files=context.generated_files,
             summary=report_summary,
-            status="SUCCESS",
+            status=status.value,
+            validation=validation,
         )
+        if validation is not None:
+            self._event_bus.publish(
+                Event(
+                    event_type="developer.validated",
+                    data={
+                        "project_id": spec.project_id,
+                        "status": status.value,
+                        **validation.to_dict(),
+                    },
+                )
+            )
 
         # 8. Save to memory
         try:
@@ -194,5 +215,11 @@ class ForgeAIDeveloper(DeveloperService):
             )
         )
 
-        logger.info("Project implementation completed successfully.")
+        if status is ImplementationStatus.VALIDATION_FAILED and validation is not None:
+            logger.warning(
+                f"Project implementation finished, but the generated code failed validation "
+                f"({len(validation.errors)} errors, {len(validation.warnings)} warnings)."
+            )
+        else:
+            logger.info(f"Project implementation completed: {status.value}.")
         return report

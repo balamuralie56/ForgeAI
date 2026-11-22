@@ -2,7 +2,7 @@
 
 ForgeAI is a completely local, privacy-first AI Operating System for Software Engineering. It is designed to autonomously plan software projects, design software architecture, write tests, develop applications, debug code, and review pull requests—all running locally on the user's computer without dependency on cloud AI services.
 
-**Current state: v0.9.5.** Core runtime, all 8 plugins (Planner, Architect, Developer, Tester, Documentation, Security, Reviewer, Git), the FastAPI backend, and the React frontend are implemented and covered by 363 passing tests. The sections below are written to match what actually runs today, not the long-term vision — see [Section 6](#6-honest-project-status) for what's finished, what's a known gap, and what hasn't been started.
+**Current state: v0.9.5.** Core runtime, all 8 plugins (Planner, Architect, Developer, Tester, Documentation, Security, Reviewer, Git), the FastAPI backend, and the React frontend are implemented and covered by 408 passing tests. The sections below are written to match what actually runs today, not the long-term vision — see [Section 6](#6-honest-project-status) for what's finished, what's a known gap, and what hasn't been started.
 
 ---
 
@@ -161,6 +161,7 @@ ForgeAI is far enough along to be worth showing, and far enough from done that i
 - All 8 plugins: Planner, Architect, Developer, Tester, Documentation, Security, Git, Reviewer.
 - The FastAPI backend and React frontend, wired to the real services (no mocked responses).
 - The `BUILD_ONLY` workflow (Section 0) runs end-to-end today; `forge_workspace/todo_pipeline_demo` is a real artifact proving it.
+- The Developer plugin statically validates the code it generates (without executing it) and reports `VALIDATION_FAILED` instead of `SUCCESS` when the code will not import or run. Running the workflow does not mean the generated code is correct: with small local models (e.g. `qwen2.5-coder:3b`) it often isn't, and the validation panel in the Files tab says so. See [code_validation.md](forge_docs/modules/code_validation.md).
 
 **Known, intentional gap:**
 - The Reviewer plugin's Liskov Substitution (L) check is explicitly not implemented — it needs cross-class contract analysis the current rule interface can't do. Documented in `forge_docs/ROADMAP.md`, not an oversight.

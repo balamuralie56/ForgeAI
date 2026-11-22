@@ -126,7 +126,7 @@ class TestDeveloperPlugin(unittest.TestCase):
                 model_name="mock-model",
             ),
             ModelResponse(
-                text='{"files": [{"path": "api.py", "content": "class Route", "file_type": "api"}]}',
+                text='{"files": [{"path": "api.py", "content": "ROUTES = []", "file_type": "api"}]}',
                 raw_response={},
                 model_name="mock-model",
             ),
@@ -224,7 +224,7 @@ class TestDeveloperPlugin(unittest.TestCase):
                 model_name="mock-model",
             ),
             ModelResponse(
-                text='{"files": [{"path": "api.py", "content": "class Route", "file_type": "api"}]}',
+                text='{"files": [{"path": "api.py", "content": "ROUTES = []", "file_type": "api"}]}',
                 raw_response={},
                 model_name="mock-model",
             ),

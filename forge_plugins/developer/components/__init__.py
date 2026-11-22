@@ -9,6 +9,7 @@ from .database_generator import DatabaseGenerator
 from .api_generator import APIGenerator
 from .backend_generator import BackendGenerator
 from .frontend_generator import FrontendGenerator
+from .code_validation_step import CodeValidationStep
 from .implementation_report_generator import ImplementationReportGenerator
 
 __all__ = [
@@ -19,5 +20,6 @@ __all__ = [
     "APIGenerator",
     "BackendGenerator",
     "FrontendGenerator",
+    "CodeValidationStep",
     "ImplementationReportGenerator",
 ]

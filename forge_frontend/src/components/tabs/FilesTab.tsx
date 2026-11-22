@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { api, ApiError } from "../../api";
 import { FileTree } from "../FileTree";
 import { CodeViewer } from "../CodeViewer";
+import { ValidationPanel } from "../ValidationPanel";
 import type { FileEntry } from "../../types";
 
 type PreviewState =
@@ -11,8 +12,17 @@ type PreviewState =
 
 /** File tree + code preview for a workflow's workspace. Polls while the
  * workflow is active so files appear as each stage writes them, not only
- * once the whole run finishes. */
-export function FilesTab({ workflowId, isActive }: { workflowId: string; isActive: boolean }) {
+ * once the whole run finishes. `reportReady` turns on the validation panel
+ * once the Developer stage has produced its implementation report. */
+export function FilesTab({
+  workflowId,
+  isActive,
+  reportReady,
+}: {
+  workflowId: string;
+  isActive: boolean;
+  reportReady: boolean;
+}) {
   const [files, setFiles] = useState<FileEntry[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [preview, setPreview] = useState<PreviewState>({ status: "loading" });
@@ -59,6 +69,13 @@ export function FilesTab({ workflowId, isActive }: { workflowId: string; isActiv
 
   return (
     <div className="tab-panel tab-panel--files">
+      <ValidationPanel
+        enabled={reportReady}
+        onOpenFile={(path) => {
+          setPreview({ status: "loading" });
+          setSelected(path);
+        }}
+      />
       <div className="files-tab">
         <div className="files-tab__tree">
           <FileTree

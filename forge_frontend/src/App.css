@@ -1403,9 +1403,140 @@
 }
 
 /* ---------- Files tab: tree + code viewer ---------- */
+.tab-panel--files {
+  display: flex;
+  flex-direction: column;
+}
+
 .files-tab {
   display: flex;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ---------- Code validation panel (Files tab) ---------- */
+.validation {
+  flex-shrink: 0;
+  margin: 12px 12px 0;
+  padding: 10px 12px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  font-size: 13px;
+}
+
+.validation--good {
+  border-color: rgba(74, 222, 128, 0.35);
+}
+
+.validation--warn {
+  border-color: rgba(245, 185, 66, 0.4);
+}
+
+.validation--bad {
+  border-color: rgba(242, 85, 90, 0.45);
+  background: rgba(242, 85, 90, 0.07);
+}
+
+.validation--none {
+  color: var(--text-muted);
+}
+
+.validation__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+}
+
+.validation__title {
+  font-weight: 600;
+}
+
+.validation--good .validation__title {
+  color: var(--good);
+}
+
+.validation--warn .validation__title {
+  color: var(--warn);
+}
+
+.validation--bad .validation__title {
+  color: var(--bad);
+}
+
+.validation__meta {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.validation__details {
+  margin-top: 8px;
+}
+
+.validation__details summary {
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 12.5px;
+}
+
+.validation__list {
+  max-height: 220px;
+  overflow-y: auto;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.validation__issue {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  gap: 2px 8px;
+  align-items: baseline;
+}
+
+.validation__sev {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.validation__sev--error {
+  color: var(--bad);
+}
+
+.validation__sev--warning {
+  color: var(--warn);
+}
+
+.validation__check {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.validation__loc {
+  justify-self: start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-align: left;
+}
+
+.validation__loc:hover {
+  text-decoration: underline;
+}
+
+.validation__msg {
+  grid-column: 1 / -1;
+  color: var(--text);
 }
 
 .files-tab__tree {

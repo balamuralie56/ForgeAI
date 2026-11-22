@@ -202,11 +202,30 @@ export interface ArchitectureSpecification {
 }
 
 // developer
+export interface ValidationIssue {
+  severity: "error" | "warning";
+  check: string;
+  path: string;
+  message: string;
+  line: number | null;
+}
+
+export interface CodeValidation {
+  passed: boolean;
+  checked_files: number;
+  error_count: number;
+  warning_count: number;
+  issues: ValidationIssue[];
+}
+
 export interface ImplementationReport {
   project_id: string;
   files: FileEntry[];
   summary: string;
+  /** SUCCESS | SUCCESS_WITH_WARNINGS | VALIDATION_FAILED */
   status: string;
+  /** Absent or null for runs generated before code validation existed. */
+  validation?: CodeValidation | null;
 }
 
 // tester

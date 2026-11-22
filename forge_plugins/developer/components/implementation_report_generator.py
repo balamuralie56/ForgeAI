@@ -2,7 +2,7 @@
 Implementation Report Generator component for the Developer Plugin.
 """
 
-from typing import Dict
+from typing import Dict, List
 from forge_plugins.developer.utils.pipeline import PipelineStep, ImplementationContext
 from forge_plugins.developer.models import GeneratedFile
 
@@ -48,7 +48,7 @@ class ImplementationReportGenerator(PipelineStep):
             [
                 "",
                 "## Generated File Registry",
-                "Below is the complete list of files successfully built:",
+                "Below is the complete list of files generated:",
                 "",
                 "| Path | File Type | Size (Bytes) |",
                 "| --- | --- | --- |",
@@ -59,6 +59,8 @@ class ImplementationReportGenerator(PipelineStep):
             lines.append(
                 f"| `{gf.path}` | {gf.file_type} | {len(gf.content.encode('utf-8'))} |"
             )
+
+        lines.extend(self._validation_section(context))
 
         lines.extend(
             [
@@ -78,3 +80,39 @@ class ImplementationReportGenerator(PipelineStep):
                 file_type="report",
             )
         )
+
+    @staticmethod
+    def _validation_section(context: ImplementationContext) -> List[str]:
+        """Markdown lines describing the code validation outcome, if it ran."""
+        result = context.validation
+        if result is None:
+            return []
+
+        lines = [
+            "",
+            "## Code Validation",
+            f"- **Status**: {result.status.value}",
+            f"- **Files Checked**: {result.checked_files}",
+            f"- **Errors**: {len(result.errors)}",
+            f"- **Warnings**: {len(result.warnings)}",
+        ]
+        if not result.issues:
+            lines.extend(["", "No problems found."])
+            return lines
+
+        lines.extend(
+            [
+                "",
+                "| Severity | Check | Location | Problem |",
+                "| --- | --- | --- | --- |",
+            ]
+        )
+        for issue in result.issues:
+            location = (
+                f"`{issue.path}:{issue.line}`" if issue.line else f"`{issue.path}`"
+            )
+            message = issue.message.replace("|", "\\|")
+            lines.append(
+                f"| {issue.severity.value} | {issue.check} | {location} | {message} |"
+            )
+        return lines

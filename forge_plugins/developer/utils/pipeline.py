@@ -5,7 +5,7 @@ Pipeline execution engine for the Developer Plugin.
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Optional
 
 from forge_core.configuration.models import ForgeConfig
 from forge_core.event_bus.models import Event
@@ -14,7 +14,7 @@ from forge_core.memory.service import MemoryService
 from forge_core.model_router.service import ModelRouterService
 from forge_plugins.planner.models import ProjectPlan
 from forge_plugins.architect.models import ArchitectureSpecification
-from forge_plugins.developer.models import GeneratedFile
+from forge_plugins.developer.models import CodeValidationResult, GeneratedFile
 
 
 @dataclass
@@ -30,6 +30,7 @@ class ImplementationContext:
     logger: logging.Logger
     generated_files: List[GeneratedFile] = field(default_factory=list)
     progress_percentage: float = 0.0
+    validation: Optional[CodeValidationResult] = None
 
 
 class PipelineStep(ABC):

@@ -186,7 +186,11 @@ function App() {
                           which may include files from a later run.
                         </div>
                       )}
-                      <FilesTab workflowId={workflow.id} isActive={isRunning} />
+                      <FilesTab
+                        workflowId={workflow.id}
+                        isActive={isRunning}
+                        reportReady={isDone("developer")}
+                      />
                     </>
                   )}
                   {activeTab === "files" && !workflow && (
