@@ -48,6 +48,9 @@ The React UI has a **History** sidebar listing every recorded run (goal, state, 
 
 Report text is rendered defensively: if a local model returns an object where the schema promises a string, the UI shows it as text, and an error boundary keeps one bad tab from blanking the app.
 
+## Interrupted runs
+Workflows only execute inside the API process, so at API startup any run still recorded as PENDING, RUNNING or WAITING was cut off by a previous server stop. `forge_api/recovery.py` marks each one CANCELLED through the Workflow Service (so project memory and history both update), sets the interrupted stage to CANCELLED, and records an `interrupted` error. Runs whose workflow state is gone from project memory are logged and left as they are.
+
 ## Known limits
 - Runs recorded before this engine existed are not imported.
 - The Files tab shows the shared workspace, so for an older run it may include files from a later run (the UI says so).

@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased] - Phase 1 Active Development
 
 ### Fixed
+- **Interrupted runs:** runs left PENDING/RUNNING/WAITING when the server stopped are now marked CANCELLED at API startup (with the interrupted stage and an "interrupted" error recorded), instead of showing as running forever with deletion disabled in the UI.
 - **Developer status:** the Developer plugin no longer reports `SUCCESS` for code that cannot run; see Code Validation below.
 - **Workflow history ordering:** the orchestrator now records a run in history before its status becomes visible in project memory, so a client that sees a stage as completed can always read that stage's report.
 - **Python 3.14 compatibility:** Removed dead-code fallback branches in three Security Plugin rules that matched on `ast.Str`/`ast.NameConstant`, deprecated node types the parser hasn't produced since Python 3.8 and which the `ast` module removes entirely in 3.14.

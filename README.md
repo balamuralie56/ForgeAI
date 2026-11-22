@@ -2,7 +2,7 @@
 
 ForgeAI is a completely local, privacy-first AI Operating System for Software Engineering. It is designed to autonomously plan software projects, design software architecture, write tests, develop applications, debug code, and review pull requests—all running locally on the user's computer without dependency on cloud AI services.
 
-**Current state: v0.9.5.** Core runtime, all 8 plugins (Planner, Architect, Developer, Tester, Documentation, Security, Reviewer, Git), the FastAPI backend, and the React frontend are implemented and covered by 408 passing tests. The sections below are written to match what actually runs today, not the long-term vision — see [Section 6](#6-honest-project-status) for what's finished, what's a known gap, and what hasn't been started.
+**Current state: v0.9.5.** Core runtime, all 8 plugins (Planner, Architect, Developer, Tester, Documentation, Security, Reviewer, Git), the FastAPI backend, and the React frontend are implemented and covered by 415 passing tests. The sections below are written to match what actually runs today, not the long-term vision — see [Section 6](#6-honest-project-status) for what's finished, what's a known gap, and what hasn't been started.
 
 ---
 

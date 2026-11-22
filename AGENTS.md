@@ -194,7 +194,7 @@ Completed
 
 ✔ React Frontend (`forge_frontend`) — multi-tab workbench consuming the real API/WebSocket stream
 
-✔ Unit Tests — 408 tests across `forge_tests`, 100% passing
+✔ Unit Tests — 415 tests across `forge_tests`, 100% passing
 
 ✔ Git Repository / GitHub Repository / Documentation / Changelog
 

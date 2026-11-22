@@ -26,7 +26,7 @@ from forge_core.workflow.service import WorkflowService
 from forge_core.workflow.models import WorkflowType
 from forge_core.version import __version__
 
-from . import bootstrap, runner
+from . import bootstrap, recovery, runner
 from .ws_manager import EventBroadcaster
 from .schemas import (
     CreateWorkflowRequest,
@@ -60,6 +60,13 @@ _broadcaster: Optional[EventBroadcaster] = None
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     global _broadcaster
     kernel = bootstrap.get_kernel()
+    interrupted = recovery.cancel_interrupted_runs(
+        _history_service(), _workflow_service()
+    )
+    if interrupted:
+        logger.warning(
+            f"Cancelled {len(interrupted)} run(s) interrupted by a previous server stop."
+        )
     event_bus = kernel.registry.resolve(EventBusService)  # type: ignore[type-abstract]
     _broadcaster = EventBroadcaster(event_bus)
     _broadcaster.start(asyncio.get_event_loop())
