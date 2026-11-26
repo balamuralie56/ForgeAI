@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased] - Phase 1 Active Development
 
 ### Fixed
+- **Assistant edit handling:** fixes for failures seen when testing the assistant on ForgeAI's own code with `qwen2.5-coder:3b`.
+  - The parser accepts a `>>>>>>> REPLACE` written in place of, or just before, the divider. It takes code written after a closing marker that came too early, and refuses a second divider instead of writing it into the file.
+  - When REPLACE restates the lines after a too-short SEARCH, those lines are replaced rather than duplicated.
+  - A whole-file rewrite must keep every module-level statement. This catches a dropped `if __name__ == "__main__":` guard that the tests didn't cover.
+  - A final try that doesn't parse is reported as a failure, not proposed.
+  - The last try asks for complete function or class definitions instead of edit blocks.
+  - A reply that starts repeating itself is cut off and retried.
+  - A model-runner crash before any output is retried once.
+  - Naming a file with `@` limits the code shown for an edit to that file, which keeps prompts short.
 - **Interrupted runs:** runs left PENDING/RUNNING/WAITING when the server stopped are now marked CANCELLED at API startup (with the interrupted stage and an "interrupted" error recorded), instead of showing as running forever with deletion disabled in the UI.
 - **Developer status:** the Developer plugin no longer reports `SUCCESS` for code that cannot run; see Code Validation below.
 - **Workflow history ordering:** the orchestrator now records a run in history before its status becomes visible in project memory, so a client that sees a stage as completed can always read that stage's report.

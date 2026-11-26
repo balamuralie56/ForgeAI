@@ -26,6 +26,7 @@ from forge_core.model_router.service import (
 )
 from forge_plugins.assistant.components.agent import (
     AssistantAgent,
+    is_looping,
     Prompts,
     format_check_failure,
     should_reproduce,
@@ -482,6 +483,34 @@ class TestEditBlocks(unittest.TestCase):
         self.assertEqual(parsed.blocks[2].search, "")
         self.assertEqual(parsed.problems, [])
 
+    def test_parse_accepts_replace_marker_used_as_divider(self) -> None:
+        # Seen from qwen2.5-coder:3b on ForgeAI's launcher.py.
+        reply = (
+            "launcher.py\n<<<<<<< SEARCH\ndef main():\n    pass\n>>>>>>> REPLACE\n"
+            "def main():\n    print('v')\n>>>>>>> REPLACE\n"
+        )
+        parsed = parse_edit_blocks(reply)
+        self.assertEqual(parsed.problems, [])
+        self.assertEqual(parsed.blocks[0].search, "def main():\n    pass")
+        self.assertEqual(parsed.blocks[0].replace, "def main():\n    print('v')")
+        # A stray REPLACE marker right before the divider is ignored.
+        stray = parse_edit_blocks(
+            "a.py\n<<<<<<< SEARCH\nx = 1\n>>>>>>> REPLACE\n=======\nx = 2\n>>>>>>> REPLACE\n"
+        )
+        self.assertEqual(stray.problems, [])
+        self.assertEqual(
+            (stray.blocks[0].search, stray.blocks[0].replace), ("x = 1", "x = 2")
+        )
+        # Two dividers in one block are refused for code, allowed for prose.
+        double = "<<<<<<< SEARCH\nx = 1\n=======\n    =======\n>>>>>>> REPLACE\n"
+        self.assertIn(
+            "more than one", parse_edit_blocks("a.py\n" + double).problems[0].message
+        )
+        self.assertEqual(parse_edit_blocks("README.md\n" + double).problems, [])
+        # A lone REPLACE marker is still a missing divider.
+        lone = parse_edit_blocks("a.py\n<<<<<<< SEARCH\nx\n>>>>>>> REPLACE\nb.py\n")
+        self.assertIn("=======", lone.problems[0].message)
+
     def test_parse_reports_malformed_blocks(self) -> None:
         cut_off = parse_edit_blocks("a.py\n<<<<<<< SEARCH\nx\n=======\ny\n")
         self.assertIn("length limit", cut_off.problems[0].message)
@@ -517,6 +546,25 @@ class TestEditBlocks(unittest.TestCase):
         )
         self.assertIsNone(problem)
         self.assertIn("return 5", no_blank)
+
+    def test_short_search_with_restated_body_does_not_duplicate(self) -> None:
+        # Seen from qwen2.5-coder:3b: SEARCH has only the def line, REPLACE
+        # restates the whole function with a new first statement.
+        content = 'def main():\n    """Entry."""\n    run()\n    stop()\n\n\nmain()\n'
+        updated, problem = replace_once(
+            content,
+            'def main():\n    """Entry."""',
+            'def main():\n    """Entry."""\n    check()\n    run()\n    stop()',
+        )
+        self.assertIsNone(problem)
+        self.assertEqual(
+            updated,
+            'def main():\n    """Entry."""\n    check()\n    run()\n    stop()\n\n\nmain()\n',
+        )
+        # A REPLACE that ends with just one line matching what follows is
+        # applied literally: one line is too weak a signal to drop code.
+        plain, _ = replace_once("a = 1\nb = 2\nc = 3\n", "a = 1", "a = 0\nb = 2")
+        self.assertEqual(plain, "a = 0\nb = 2\nb = 2\nc = 3\n")
 
     def test_replace_reports_ambiguous_and_missing(self) -> None:
         content = "x = 1\nx = 1\ny = 2\n"
@@ -594,6 +642,48 @@ class TestEditBlocks(unittest.TestCase):
         class_only = "```python\n" + STORE_PY.split("\n\n\n", 1)[1] + "```"
         self.assertEqual(
             whole_file_edits(class_only, ["todo/store.py"], files.get, lambda p: p), []
+        )
+
+    def test_whole_file_must_keep_module_level_code(self) -> None:
+        # Seen from qwen2.5-coder:3b on ForgeAI's launcher.py: a whole-file
+        # rewrite that silently dropped the `if __name__ == "__main__"` guard.
+        original = "import sys\n\n\ndef main():\n    print(1)\n\n\nif __name__ == '__main__':\n    main()\n"
+        dropped = "import sys\n\n\ndef main():\n    print(2)\n"
+        kept = original.replace("print(1)", "print(2)")
+        files = {"app.py": original}
+        self.assertEqual(
+            whole_file_edits(
+                f"app.py\n```python\n{dropped}```", ["app.py"], files.get, lambda p: p
+            ),
+            [],
+        )
+        self.assertEqual(
+            len(
+                whole_file_edits(
+                    f"app.py\n```python\n{kept}```", ["app.py"], files.get, lambda p: p
+                )
+            ),
+            1,
+        )
+
+    def test_code_after_an_early_replace_marker_is_used(self) -> None:
+        # Seen from qwen2.5-coder:3b: SEARCH and REPLACE identical, with the
+        # real new lines written after the closing marker.
+        content = 'def main():\n    """Entry."""\n    run()\n    stop()\n\n\nmain()\n'
+        reply = (
+            'app.py\n<<<<<<< SEARCH\ndef main():\n    """Entry."""\n=======\n'
+            'def main():\n    """Entry."""\n>>>>>>> REPLACE\n'
+            "    check()\n    run()\n    stop()\n"
+        )
+        parsed = parse_edit_blocks(reply)
+        self.assertEqual(parsed.problems, [])
+        changes, problems = apply_edit_blocks(
+            parsed.blocks, {"app.py": content}.get, lambda p: p
+        )
+        self.assertEqual(problems, [])
+        self.assertEqual(
+            changes[0].updated,
+            'def main():\n    """Entry."""\n    check()\n    run()\n    stop()\n\n\nmain()\n',
         )
 
     def test_definition_edits(self) -> None:
@@ -1104,6 +1194,70 @@ class TestAgentEdit(AgentCase):
             "could not produce edits",
             [e for e in events if e["type"] == "error"][0]["detail"],
         )
+
+    def test_last_try_asks_for_whole_definitions(self) -> None:
+        malformed = (
+            "todo/store.py\n<<<<<<< SEARCH\n    def list(self):\n>>>>>>> REPLACE\n"
+        )
+        definitions = (
+            "todo/store.py\n```python\n"
+            + STORE_PY.split("\n\n\n", 1)[1]
+            + "\n    def count(self) -> int:\n        return len(self._tasks)\n```\n"
+        )
+        router = ScriptedRouter([malformed, malformed, definitions])
+        events = self.run_turn(router, "add count to @store.py", AssistantMode.EDIT)
+        self.assertIn("edit blocks", router.calls[1][-1]["content"])
+        self.assertIn("complete new version", router.calls[2][-1]["content"])
+        change = [e for e in events if e["type"] == "change_set"][0]["change_set"]
+        self.assertIn("+    def count(self) -> int:", change["files"][0]["diff"])
+
+    def test_looping_reply_is_stopped_and_retried(self) -> None:
+        loop = (
+            "launcher.py\n"
+            + "<<<<<<< SEARCH\nif __name__ == '__main__':\n    main()\n>>>>>>> REPLACE\n"
+            * 40
+        )
+        router = ScriptedRouter([loop, ADD_COUNT_REPLY])
+        events = self.run_turn(router, "add count", AssistantMode.EDIT)
+        streamed = sum(len(e["text"]) for e in events if e["type"] == "token")
+        self.assertLess(streamed, len(loop) + len(ADD_COUNT_REPLY))
+        self.assertIn("stuck repeating", router.calls[1][-1]["content"])
+        self.assertTrue(any(e["type"] == "change_set" for e in events))
+        self.assertFalse(is_looping(STORE_PY * 2))
+
+    def test_model_crash_before_output_is_retried_once(self) -> None:
+        class CrashOnce(ScriptedRouter):
+            def stream_chat(self, messages, provider=None, model=None, **kwargs):  # type: ignore[no-untyped-def]
+                if not self.calls:
+                    self.calls.append(messages)
+                    raise GenerationError("connection forcibly closed")
+                return super().stream_chat(messages, provider, model, **kwargs)
+
+        events = self.run_turn(CrashOnce(["Answer."]), "q", AssistantMode.ASK)
+        self.assertTrue(
+            any(e["type"] == "status" and "retrying" in e["text"] for e in events)
+        )
+        self.assertEqual(self.store.list_messages("c1")[-1].content, "Answer.")
+
+    def test_named_file_limits_edit_context(self) -> None:
+        router = ScriptedRouter([ADD_COUNT_REPLY])
+        events = self.run_turn(router, "add count to @store.py", AssistantMode.EDIT)
+        context = [e for e in events if e["type"] == "context"][0]
+        self.assertEqual([c["path"] for c in context["included"]], ["todo/store.py"])
+
+    def test_final_try_with_syntax_error_is_not_proposed(self) -> None:
+        broken = ADD_COUNT_REPLY.replace(
+            "return len(self._tasks)", "return len(self._tasks"
+        )
+        events = self.run_turn(
+            ScriptedRouter([broken]),
+            "add count",
+            AssistantMode.EDIT,
+            max_edit_attempts=1,
+        )
+        self.assertFalse(any(e["type"] == "change_set" for e in events))
+        self.assertEqual(self.store.list_change_sets("c1"), [])
+        self.assertTrue(self.store.list_messages("c1")[-1].metadata["edit_failed"])
 
     def test_clarifying_question_is_not_retried(self) -> None:
         router = ScriptedRouter(["Which file do you mean?"])

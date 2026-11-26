@@ -27,6 +27,8 @@ from ..models import FileChange
 _HEAD = re.compile(r"^\s*<{5,9}\s*SEARCH\s*$")
 _DIVIDER = re.compile(r"^\s*={5,9}\s*$")
 _TAIL = re.compile(r"^\s*>{5,9}\s*REPLACE\s*$")
+# Files where a "=======" line can be real content (a Markdown/reST heading).
+_PROSE_SUFFIXES = (".md", ".rst", ".txt")
 _FENCE = re.compile(r"^\s*(`{3,}|~{3,})(.*)$")
 _PATH_TOKEN = re.compile(r"[\w.\-/\\]*[\w\-]\.[A-Za-z0-9]{1,10}\b|[\w.\-]+/[\w.\-/]+")
 _DECORATION = re.compile(
@@ -113,7 +115,19 @@ def parse_edit_blocks(text: str) -> ParsedEdits:
         ):
             search.append(lines[i])
             i += 1
-        if i >= len(lines) or not _DIVIDER.match(lines[i]):
+        if (
+            i + 1 < len(lines)
+            and _TAIL.match(lines[i])
+            and _DIVIDER.match(lines[i + 1])
+        ):
+            # A stray REPLACE marker right before the divider.
+            i += 1
+        elif i < len(lines) and _TAIL.match(lines[i]) and _closes_later(lines, i + 1):
+            # Small models often write ">>>>>>> REPLACE" for the divider as
+            # well; a second REPLACE marker before the next block makes the
+            # intent unambiguous.
+            pass
+        elif i >= len(lines) or not _DIVIDER.match(lines[i]):
             problems.append(
                 EditProblem(
                     path or "",
@@ -149,9 +163,53 @@ def parse_edit_blocks(text: str) -> ParsedEdits:
                 )
             )
             continue
+        if any(_DIVIDER.match(line) for line in replace) and not path.lower().endswith(
+            _PROSE_SUFFIXES
+        ):
+            # A second divider means the model lost track of the format; the
+            # marker would otherwise be written into the code.
+            problems.append(
+                EditProblem(
+                    path,
+                    "An edit block has more than one ======= line. Use exactly one "
+                    "between SEARCH and REPLACE.",
+                )
+            )
+            continue
+        if _trim_blank_edges(search) == _trim_blank_edges(replace):
+            # The REPLACE marker came too early: the block changes nothing
+            # and the real new lines follow it. Take them as the replacement.
+            trailing, i = _trailing_code(lines, i)
+            if trailing:
+                replace = replace + trailing
         blocks.append(EditBlock(path, "\n".join(search), "\n".join(replace)))
         current_path = path
     return ParsedEdits(blocks, problems)
+
+
+def _trailing_code(lines: Sequence[str], start: int) -> Tuple[List[str], int]:
+    """
+    Lines after a block, up to the next block (or its file path line) or a
+    code fence. Returns them (blank edges trimmed) and where they end.
+    """
+    end = start
+    while end < len(lines):
+        if _HEAD.match(lines[end]) or _FENCE.match(lines[end]):
+            break
+        if end + 1 < len(lines) and _HEAD.match(lines[end + 1]):
+            break  # The next block's path line.
+        end += 1
+    return _trim_blank_edges(list(lines[start:end])), end
+
+
+def _closes_later(lines: Sequence[str], start: int) -> bool:
+    """True if a REPLACE marker follows before any other block marker."""
+    for line in lines[start:]:
+        if _TAIL.match(line):
+            return True
+        if _HEAD.match(line) or _DIVIDER.match(line):
+            return False
+    return False
 
 
 def _find_path(lines: Sequence[str], head_index: int) -> Optional[str]:
@@ -360,6 +418,7 @@ def replace_once(
         matches = strategy()
         if len(matches) == 1:
             start, end, new_lines = matches[0]
+            end = _absorb_restated_lines(file_lines, end, new_lines)
             return "\n".join(file_lines[:start] + new_lines + file_lines[end:]), None
         if len(matches) > 1:
             return content, (
@@ -371,6 +430,29 @@ def replace_once(
         "SEARCH does not match the file. It must copy the current lines exactly.",
         _closest_lines(file_lines, search_lines),
     )
+
+
+def _absorb_restated_lines(
+    file_lines: List[str], end: int, new_lines: List[str]
+) -> int:
+    """
+    Small models often give a short SEARCH (say, a function's first two
+    lines) but restate the rest of the function in REPLACE. Applied
+    literally, the old rest would stay and appear twice. When REPLACE ends
+    with exactly the lines that follow the match, those lines are taken as
+    replaced too.
+
+    Returns:
+        int: The (possibly extended) end of the replaced region.
+    """
+    longest = min(len(new_lines), len(file_lines) - end)
+    for k in range(longest, 1, -1):
+        following = [line.strip() for line in file_lines[end : end + k]]
+        if sum(1 for line in following if line) < 2:
+            continue
+        if [line.strip() for line in new_lines[-k:]] == following:
+            return end + k
+    return end
 
 
 def _indent_shift(file_line: str, search_line: str) -> Optional[Tuple[str, int]]:
@@ -514,6 +596,10 @@ def _top_level_keys(path: str, content: str) -> Optional[set]:
             and isinstance(node.value.value, str)
         ):
             keys.add(("docstring", ""))
+        else:
+            # Any other module-level code (an `if __name__ == "__main__":`
+            # guard, a registration call, ...) must survive verbatim.
+            keys.add(("statement", ast.unparse(node)))
     return keys
 
 

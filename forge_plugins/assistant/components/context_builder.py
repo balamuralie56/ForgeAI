@@ -211,7 +211,14 @@ class ContextBuilder:
 
         code_budget = max(available - used, 0)
         if mode is AssistantMode.EDIT:
-            sections, included = self._edit_code(index, ranked_files, hits, code_budget)
+            # When the user names the files to change, show only those: small
+            # models follow the edit format far worse as the prompt grows,
+            # and the project map still tells them what else exists.
+            # A request that only names tests ("make @test_x.py pass") still
+            # needs the code under test, so it keeps the ranked files.
+            only_tests = bool(referenced) and all(_is_test_path(p) for p in referenced)
+            edit_files = referenced if referenced and not only_tests else ranked_files
+            sections, included = self._edit_code(index, edit_files, hits, code_budget)
         else:
             sections, included = self._ask_code(index, referenced, hits, code_budget)
 
@@ -482,6 +489,15 @@ def _strip_code(content: str) -> str:
             continue
         kept.append(line)
     return "\n".join(kept).strip()
+
+
+def _is_test_path(path: str) -> bool:
+    name = PurePosixPath(path).name
+    return (
+        name.startswith("test_")
+        or name.endswith(("_test.py", ".test.ts", ".test.tsx", ".spec.ts", ".spec.js"))
+        or "/tests/" in "/" + path
+    )
 
 
 def _status_phrase(status: str) -> str:

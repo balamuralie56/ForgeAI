@@ -11,7 +11,7 @@ The assistant makes up for that by doing what an experienced engineer does aroun
 |---|---|---|
 | Find context | BM25 search over identifier-aware tokens, `@file` mentions, and file paths found in pasted tracebacks. Edit mode shows whole files; small files are always shown whole. | The model guesses instead of reading, or edits code it was never shown |
 | Reproduce first | If you describe a failure and a check command is set, the check runs before the model is asked, and its output goes into the prompt | It explains a test failure from the code without seeing the real error |
-| Parse edits | SEARCH/REPLACE blocks. The parser tolerates fences, decorated file names and resized markers. Matching tolerates trailing whitespace, a consistent indent shift and missing blank lines. | Near-miss formatting |
+| Parse edits | SEARCH/REPLACE blocks. The parser tolerates fences, decorated file names, resized markers, and a `>>>>>>> REPLACE` written in place of or just before the divider. Matching tolerates trailing whitespace, a consistent indent shift and missing blank lines. When REPLACE restates the lines that follow a too-short SEARCH, those lines are replaced instead of duplicated. | Near-miss formatting |
 | Recover formats | A reply that restates a whole file, or whole functions or classes, becomes the edit, but only if nothing that existed is dropped | The model ignores the edit format |
 | Reject bad edits | Ambiguous or non-matching SEARCH text, `...` in REPLACE, and empty SEARCH on an existing file are refused. No-op blocks are skipped. | Deleting code, editing the wrong place |
 | Check statically | The Developer plugin's validator runs on the whole project before and after the change (syntax, JSON/TOML, imports, names imported from local modules, undefined names), plus a `self.attr`-never-defined check. Only new problems count. | Calling helpers that don't exist, breaking other modules |
@@ -100,3 +100,5 @@ All endpoints require the `X-ForgeAI-Client` header and a loopback host.
 - Static checks are Python-only (plus JSON/TOML). For other languages, the check command is the only verification.
 - Search is lexical (BM25), not semantic. A question phrased with none of the code's words may miss the right file, so name it with `@`.
 - Only the root `.gitignore` is honoured.
+- Longer prompts make small models worse at the edit format. On ForgeAI's own 260-line `launcher.py` (about 5,000 tokens of prompt), `qwen2.5-coder:3b` repeatedly malformed its edit blocks; the tolerances above recover most of those cases. Name the file with `@` so only that file is shown.
+- Checks only catch what they exercise. A unit-test check command won't notice a change that breaks running the script itself, so pick a command that covers what you're changing.

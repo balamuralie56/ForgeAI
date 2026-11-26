@@ -79,6 +79,24 @@ class _StreamOutcome:
     cancelled: bool = False
     error: str = ""
     seconds: float = 0.0
+    looped: bool = False
+
+
+_REPEAT_CHECK_CHARS = 400
+_REPEAT_TAIL_CHARS = 240
+_REPEAT_MIN_CHARS = 1200
+
+
+def is_looping(text: str) -> bool:
+    """
+    True when a reply has fallen into repeating itself - a common failure of
+    small models on long prompts, which otherwise burns the whole token
+    budget writing the same block over and over.
+    """
+    if len(text) < _REPEAT_MIN_CHARS:
+        return False
+    tail = text[-_REPEAT_TAIL_CHARS:]
+    return len(tail.strip()) > 40 and text.count(tail) >= 3
 
 
 @dataclass
@@ -101,12 +119,10 @@ def summarize_plan(reply: str, files: Sequence[FileChange]) -> str:
     """One-line summary of a change: the model's plan, or the files touched."""
     plan = reply.split("<<<<<<<", 1)[0]
     for line in plan.splitlines():
+        if line.strip().startswith(("```", "~~~")):
+            break  # The plan ends where code begins.
         text = line.strip().strip("*#`>-").strip()
-        if (
-            text
-            and not text.startswith("```")
-            and not text.endswith((".py", ".ts", ".tsx", ".js"))
-        ):
+        if text and not re.fullmatch(r"[\w./\\-]+\.[A-Za-z0-9]{1,8}:?", text):
             return text if len(text) <= 160 else text[:157] + "..."
     return "Edit " + ", ".join(f.path for f in files)
 
@@ -128,6 +144,23 @@ def format_problems(problems: Sequence[EditProblem]) -> str:
         "Copy SEARCH lines exactly from the code you were shown."
     )
     return "\n".join(lines)
+
+
+def format_definitions_request(problems: Sequence[EditProblem]) -> str:
+    """
+    Last-try feedback after edit blocks failed twice: ask for whole
+    definitions instead, a format small models get right far more often.
+    """
+    first = problems[0]
+    where = f"{first.path}: " if first.path else ""
+    return (
+        f"Your edit blocks still could not be used ({where}{first.message}). "
+        "Do not write edit blocks this time. Instead, for each function or class "
+        "you change or add, write its complete new version - from its def or "
+        "class line to its last line - in a ```python code block, with the "
+        "file's path on the line above the block. Do not leave anything out "
+        "of a function or class you rewrite."
+    )
 
 
 def format_verification(result: VerificationResult) -> str:
@@ -534,7 +567,17 @@ class AssistantAgent:
 
             parsed = parse_edit_blocks(outcome.text)
             problems: List[EditProblem]
-            if parsed.found_any:
+            changes: List[FileChange]
+            if outcome.looped:
+                changes = []
+                problems = [
+                    EditProblem(
+                        "",
+                        "Your reply got stuck repeating the same lines. Write each "
+                        "edit block once, then stop.",
+                    )
+                ]
+            elif parsed.found_any:
                 changes, apply_problems = apply_edit_blocks(
                     parsed.blocks, workspace.read_text, workspace.normalize
                 )
@@ -584,9 +627,20 @@ class AssistantAgent:
                         + problems[0].message
                     )
                     yield {"type": "attempt", "number": attempt + 1, "reason": reason}
+                    last_try = attempt + 1 == self._settings.max_edit_attempts
+                    python_targets = [
+                        c.path
+                        for c in context.included
+                        if c.full and c.path.endswith(".py")
+                    ]
+                    instructions = (
+                        format_definitions_request(problems)
+                        if last_try and attempt > 1 and python_targets
+                        else format_problems(problems)
+                    )
                     feedback = [
                         {"role": "assistant", "content": outcome.text},
-                        {"role": "user", "content": format_problems(problems)},
+                        {"role": "user", "content": instructions},
                     ]
                 continue
 
@@ -606,6 +660,14 @@ class AssistantAgent:
                     {"role": "user", "content": format_verification(verification)},
                 ]
                 continue
+            if any(issue.check == "syntax" for issue in verification.errors):
+                # Out of tries, and the code would not even parse: proposing
+                # it would only invite applying something certainly broken.
+                record["verification"] = verification.to_dict()
+                record["problems"] = [
+                    {"path": i.path, "message": i.message} for i in verification.errors
+                ]
+                break
 
             now = _now()
             change_set = ChangeSet(
@@ -708,31 +770,51 @@ class AssistantAgent:
         outcome = _StreamOutcome()
         parts: List[str] = []
         started = time.perf_counter()
-        try:
-            stream = self._router.stream_chat(
-                messages,
-                model=self._settings.model or None,
-                temperature=self._settings.temperature,
-                max_tokens=max_tokens,
-                options={"num_ctx": self._settings.context_tokens},
-            )
+        for call in (1, 2):
             try:
-                for chunk in stream:
-                    if cancel.is_set():
-                        outcome.cancelled = True
-                        break
-                    if chunk.text:
-                        parts.append(chunk.text)
-                        yield {"type": "token", "text": chunk.text}
-                    if chunk.done:
-                        outcome.usage = dict(chunk.usage)
-            finally:
-                close = getattr(stream, "close", None)
-                if callable(close):
-                    close()
-        except GenerationError as e:
-            logger.error(f"Model call failed: {e}")
-            outcome.error = f"The model call failed: {e}"
+                stream = self._router.stream_chat(
+                    messages,
+                    model=self._settings.model or None,
+                    temperature=self._settings.temperature,
+                    max_tokens=max_tokens,
+                    options={"num_ctx": self._settings.context_tokens},
+                )
+                try:
+                    checked_at = 0
+                    for chunk in stream:
+                        if cancel.is_set():
+                            outcome.cancelled = True
+                            break
+                        if chunk.text:
+                            parts.append(chunk.text)
+                            yield {"type": "token", "text": chunk.text}
+                        if chunk.done:
+                            outcome.usage = dict(chunk.usage)
+                        length = sum(len(p) for p in parts)
+                        if length - checked_at >= _REPEAT_CHECK_CHARS:
+                            checked_at = length
+                            if is_looping("".join(parts)):
+                                logger.warning(
+                                    "Model output started repeating; stopped it."
+                                )
+                                outcome.looped = True
+                                break
+                finally:
+                    close = getattr(stream, "close", None)
+                    if callable(close):
+                        close()
+                break
+            except GenerationError as e:
+                logger.error(f"Model call failed: {e}")
+                if call == 1 and not parts and not cancel.is_set():
+                    # The local runner can crash (e.g. an iGPU driver reset);
+                    # Ollama restarts it, so one immediate retry is worth it.
+                    yield {
+                        "type": "status",
+                        "text": "The model stopped unexpectedly; retrying...",
+                    }
+                    continue
+                outcome.error = f"The model call failed: {e}"
         outcome.text = "".join(parts)
         outcome.seconds = time.perf_counter() - started
         return outcome
