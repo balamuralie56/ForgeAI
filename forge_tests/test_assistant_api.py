@@ -134,6 +134,7 @@ class TestAssistantAPI(unittest.TestCase):
         body = self.client.get("/api/assistant/status", headers=HEADERS).json()
         self.assertIn("model", body)
         self.assertIn("storage", body)
+        self.assertFalse(body["build_running"])
 
     def test_create_validates_project_folder(self) -> None:
         response = self.client.post(

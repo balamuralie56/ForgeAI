@@ -109,6 +109,18 @@ export function AssistantView() {
     return () => abortRef.current?.abort();
   }, [refreshList]);
 
+  // Builds share the model with the assistant; keep the "build running"
+  // notice current so a slow reply has a visible reason.
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      assistantApi
+        .status()
+        .then(setStatus)
+        .catch(() => undefined);
+    }, 15000);
+    return () => window.clearInterval(interval);
+  }, []);
+
   useEffect(() => {
     const thread = threadRef.current;
     if (thread) thread.scrollTop = thread.scrollHeight;
@@ -402,6 +414,13 @@ export function AssistantView() {
                 </button>
               </div>
             </header>
+
+            {status?.build_running && (
+              <div className="app__note">
+                A build is running and using the model, so replies here wait until each build step
+                finishes. That can take several minutes.
+              </div>
+            )}
 
             {editingSettings && (
               <ConversationForm

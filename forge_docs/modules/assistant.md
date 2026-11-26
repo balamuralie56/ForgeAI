@@ -100,5 +100,6 @@ All endpoints require the `X-ForgeAI-Client` header and a loopback host.
 - Static checks are Python-only (plus JSON/TOML). For other languages, the check command is the only verification.
 - Search is lexical (BM25), not semantic. A question phrased with none of the code's words may miss the right file, so name it with `@`.
 - Only the root `.gitignore` is honoured.
+- Builds and the assistant share one model slot (`OLLAMA_NUM_PARALLEL=1`), and Ollama reloads the model whenever they alternate, because they use different context sizes. While a build runs, replies wait for each build step, and the Assistant view says so. Assistant requests can also slow a build enough to push a long stage past its timeout, so avoid using both at once.
 - Longer prompts make small models worse at the edit format. On ForgeAI's own 260-line `launcher.py` (about 5,000 tokens of prompt), `qwen2.5-coder:3b` repeatedly malformed its edit blocks; the tolerances above recover most of those cases. Name the file with `@` so only that file is shown.
 - Checks only catch what they exercise. A unit-test check command won't notice a change that breaks running the script itself, so pick a command that covers what you're changing.

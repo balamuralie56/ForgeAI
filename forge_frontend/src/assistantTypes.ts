@@ -110,6 +110,7 @@ export interface AssistantStatus {
   max_fix_rounds: number;
   check_timeout: number;
   active_conversations: string[];
+  build_running: boolean;
   storage: { database_bytes: number; conversation_count: number; message_count: number };
 }
 

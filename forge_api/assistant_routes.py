@@ -30,7 +30,7 @@ from forge_plugins.assistant.exceptions import (
 from forge_plugins.assistant.models import AssistantMode
 from forge_plugins.assistant.service import AssistantService
 
-from . import bootstrap
+from . import bootstrap, runner
 
 logger = logging.getLogger("ForgeAI.API.Assistant")
 
@@ -119,9 +119,17 @@ def _http_error(error: AssistantError) -> HTTPException:
 
 @router.get("/status")
 def get_status() -> Dict[str, Any]:
-    """Returns the model and limits the assistant uses, and its storage."""
+    """
+    Returns the model and limits the assistant uses, its storage, and whether
+    a build workflow is running (builds and the assistant share the model, so
+    replies wait while a build step is generating).
+    """
     service = _service()
-    return {**service.status(), "storage": service.storage()}
+    return {
+        **service.status(),
+        "storage": service.storage(),
+        "build_running": runner.is_running(),
+    }
 
 
 @router.get("/conversations")

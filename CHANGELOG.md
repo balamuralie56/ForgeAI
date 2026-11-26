@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased] - Phase 1 Active Development
 
 ### Fixed
+- **Assistant while a build runs:** builds and the assistant share the one model slot, so assistant replies waited silently (once past the 900 s request limit) while a build step was generating. `GET /api/assistant/status` now reports `build_running`, and the Assistant view shows a notice explaining the wait.
 - **Assistant edit handling:** fixes for failures seen when testing the assistant on ForgeAI's own code with `qwen2.5-coder:3b`.
   - The parser accepts a `>>>>>>> REPLACE` written in place of, or just before, the divider. It takes code written after a closing marker that came too early, and refuses a second divider instead of writing it into the file.
   - When REPLACE restates the lines after a too-short SEARCH, those lines are replaced rather than duplicated.
